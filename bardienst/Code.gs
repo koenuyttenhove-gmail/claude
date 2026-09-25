@@ -27,6 +27,13 @@ const START_SPEELDAGEN = [
   [new Date(2026, 10, 17), ''],
 ];
 
+// Link naar een afbeelding van de affiche (leeg laten = geen affiche tonen).
+// Voorbeeld met Google Drive: zet de afbeelding in Drive, deel ze met
+// "Iedereen met de link", en gebruik
+//   'https://drive.google.com/thumbnail?id=HIER_HET_ID&sz=w600'
+// Het ID is het stuk tussen /d/ en /view in de deellink.
+const AFFICHE_URL = '';
+
 const MAX_NAAM = 40;
 
 function doGet() {
@@ -85,6 +92,7 @@ function getData() {
 
   return {
     titel: TITEL,
+    affiche: AFFICHE_URL,
     functies: FUNCTIES,
     dagen: dagen,
     inschrijvingen: inschrijvingen,
