@@ -6,7 +6,8 @@
 <title>Bardienst</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto+Condensed:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<!-- Lettertypes laden zonder de pagina op te houden; tot dan worden gewone lettertypes gebruikt. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto+Condensed:wght@400;700&family=Source+Sans+3:wght@400;700&display=swap" media="print" onload="this.media='all'">
 <style>
   /* Huisstijl van de affiche "Tot de dood ons scheidt" (Ieperse Kunstkring Richten):
      hemelsblauw, donkergroen, wit lint, en de boardingpass van de affiche.
@@ -182,6 +183,22 @@
   .nav .verder:hover { background: var(--groen); }
   .geenkeuze { text-align: center; color: var(--muted); font-size: 15px; margin: 0; }
 
+  /* ---------- Opmerking per avond ---------- */
+  .opm { padding: 14px 16px 6px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+  .opm label { font: 700 15px var(--smal); color: var(--navy); letter-spacing: .06em; text-transform: uppercase; }
+  .opm label span { font: 400 14px var(--body); color: var(--muted); text-transform: none; letter-spacing: 0; }
+  .opm textarea {
+    width: 100%; min-height: 76px; resize: vertical; padding: 10px 12px;
+    border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface);
+    font: 400 16px/1.4 var(--body); color: var(--ink);
+  }
+  .opm textarea:focus { border-color: var(--groen); outline: none; }
+  .opm-voet { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .opm-voet .ok { color: var(--ok); font-weight: 700; }
+  .opm-voet .vol { color: var(--tekort); font-weight: 700; }
+  .ov-opm { grid-column: 2 / -1; margin: -4px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+  .ov-opm b { color: var(--navy); font-family: var(--smal); }
+
   /* ---------- Overzicht ---------- */
   .overzicht .bp-datum { padding-top: 14px; }
   .ov-rij { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
@@ -245,6 +262,8 @@
 
   <div class="melding" id="melding" role="status" aria-live="polite" hidden></div>
 
+<!-- Het rooster, meteen meegestuurd door Code.gs (doGet). Los geopend blijft dit leeg. -->
+<script type="application/json" id="begin"><?!= begin ?></script>
 <script>
 (function () {
   var ECHT = typeof google !== 'undefined' && google.script && google.script.run;
@@ -280,19 +299,28 @@
     },
     teller: 100,
     getData: function () { return this.data; },
-    addSignup: function (dag, functie, naam, voorkeur) {
+    setKeuze: function (dag, functie, naam, voorkeur) {
       naam = String(naam || '').replace(/\s+/g, ' ').trim();
       if (!naam) throw new Error('Vul eerst je naam in.');
-      var bestaand = this.data.inschrijvingen.filter(function (i) {
-        return i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase();
-      })[0];
-      if (bestaand) bestaand.voorkeur = voorkeur;
-      else this.data.inschrijvingen.push({ id: 'd' + (this.teller++), dag: dag, functie: functie, naam: naam, voorkeur: voorkeur });
-      return this.data;
+      var lijst = this.data.inschrijvingen.filter(function (i) {
+        return !(i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase());
+      });
+      if (voorkeur) lijst.push({ id: 'd' + (this.teller++), dag: dag, functie: functie, naam: naam, voorkeur: voorkeur });
+      this.data.inschrijvingen = lijst;
+      return JSON.parse(JSON.stringify(this.data));
     },
-    removeSignup: function (id) {
-      this.data.inschrijvingen = this.data.inschrijvingen.filter(function (i) { return i.id !== id; });
-      return this.data;
+    opmerkingen: {},
+    getMijnOpmerkingen: function (naam) {
+      var n = String(naam || '').trim().toLowerCase(), uit = {}, o = this.opmerkingen;
+      Object.keys(o).forEach(function (k) { if (k.split('|')[1] === n) uit[k.split('|')[0]] = o[k]; });
+      return uit;
+    },
+    setOpmerking: function (dag, naam, tekst) {
+      tekst = String(tekst || '').trim();
+      if (tekst.length > MAX_OPM) throw new Error('Je opmerking mag maximaal ' + MAX_OPM + ' tekens lang zijn.');
+      var k = dag + '|' + String(naam).trim().toLowerCase();
+      if (tekst) this.opmerkingen[k] = tekst; else delete this.opmerkingen[k];
+      return this.getMijnOpmerkingen(naam);
     }
   };
 
@@ -308,8 +336,13 @@
     });
   }
 
+  var MAX_OPM = 200;
+
   // stap 0 = uitleg, 1..n = speelavonden, n+1 = overzicht
-  var state = { data: null, bezig: false, stap: 0, naam: '' };
+  // opm = bewaarde opmerkingen per avond, concept = wat er nu in het veld staat.
+  // openstaand = aantal keuzes dat nog naar de server onderweg is.
+  var state = { data: null, openstaand: 0, stap: 0, naam: '', opm: {}, concept: {}, opmStatus: {}, opmBezig: {} };
+  var wachtrij = Promise.resolve();
   var $app = document.getElementById('app');
   var $melding = document.getElementById('melding');
 
@@ -394,6 +427,7 @@
         '<li>Je krijgt <strong>per speelavond een boarding pass</strong> (' + aantal + ' in totaal). Daarop staan de rollen: onthaal, bar en kassa.' +
           '<div class="voorbeeld" aria-hidden="true"><span class="vol">♥ Ik help graag</span><span>Ik kan eventueel ook</span></div></li>' +
         '<li>Duid per rol aan of je <strong>graag</strong> helpt of <strong>eventueel</strong> kan. Meerdere rollen en avonden mag. <strong>Kan je niet? Duid dan gewoon niets aan.</strong></li>' +
+        '<li>Iets te melden voor een avond, bv. <em>pas vanaf 20u</em>? Zet het in het <strong>opmerkingenveld</strong> onderaan de boarding pass.</li>' +
         '<li>Je keuzes worden <strong>meteen bewaard</strong>. Achteraf wijzigen kan altijd via dezelfde link.</li>' +
         '<li>Wij maken daarna het rooster en <strong>laten je finaal weten</strong> wie wanneer staat.</li>' +
       '</ol></section>' +
@@ -460,7 +494,15 @@
         '<p class="wie">' + wie + '</p></section>';
     });
 
-    html += '<div class="barcode" aria-hidden="true"></div></article>' +
+    var tekst = concept(dag.key);
+    var status = state.opmStatus[dag.key] || '';
+    html += '<div class="opm"><label for="opm">Opmerking voor deze avond <span>(optioneel)</span></label>' +
+        '<textarea id="opm" data-dag="' + esc(dag.key) + '" maxlength="' + MAX_OPM + '" rows="3" ' +
+          'placeholder="bv. pas vanaf 20u, of liefst samen met Els">' + esc(tekst) + '</textarea>' +
+        '<div class="opm-voet"><span class="opm-status' + (status === 'bewaard' ? ' ok' : '') + '">' +
+          (status === 'bewaard' ? '✓ Bewaard' : status === 'bezig' ? 'Bewaren…' : 'Wordt bewaard als je verder gaat.') + '</span>' +
+          '<span class="teller' + (tekst.length >= MAX_OPM ? ' vol' : '') + '">' + tekst.length + ' / ' + MAX_OPM + '</span></div></div>' +
+      '<div class="barcode" aria-hidden="true"></div></article>' +
       '<div class="nav"><button type="button" class="terug" data-actie="naar" data-stap="' + (i - 1) + '">← ' + (i === 1 ? 'Uitleg' : 'Vorige') + '</button>' +
         '<button type="button" class="verder" data-actie="naar" data-stap="' + (i + 1) + '">' +
           (i === lijst.length ? 'Naar mijn overzicht ✓' : 'Volgende avond ✈') + '</button></div>' +
@@ -485,7 +527,8 @@
       }).join('');
       html += '<div class="ov-rij"><div class="ov-dag"><span>' + dt.kort + '</span><b>' + dt.nr + '</b><span>' + dt.mndKort + '</span></div>' +
         '<div class="ov-keuzes">' + (keuzes || '<span class="niets">Niets aangeduid</span>') + '</div>' +
-        '<button type="button" class="wijzig" data-actie="naar" data-stap="' + (i + 1) + '">Wijzig</button></div>';
+        '<button type="button" class="wijzig" data-actie="naar" data-stap="' + (i + 1) + '">Wijzig</button>' +
+        (state.opm[dag.key] ? '<p class="ov-opm"><b>Opmerking:</b> ' + esc(state.opm[dag.key]) + '</p>' : '') + '</div>';
     });
     var n = aantalMijnKeuzes();
     html += '<div class="bewaard"><b>' + (n ? '✓ Je keuzes zijn bewaard.' : 'Je hebt nog niets aangeduid.') + '</b>' +
@@ -511,7 +554,66 @@
     else $app.innerHTML = schermOverzicht();
   }
 
+  function concept(dagKey) {
+    return state.concept.hasOwnProperty(dagKey) ? state.concept[dagKey] : (state.opm[dagKey] || '');
+  }
+
+  function laadOpmerkingen() {
+    state.opm = {}; state.concept = {}; state.opmStatus = {};
+    var naam = schoon(state.naam);
+    if (!naam) return Promise.resolve();
+    return roep('getMijnOpmerkingen', naam).then(function (o) {
+      state.opm = o || {};
+      var actief = document.activeElement;
+      if (state.stap > 0 && !(actief && actief.id === 'opm')) render();
+    }).catch(function () { /* opmerkingen zijn optioneel; de keuzes werken ook zonder */ });
+  }
+
+  // Bewaart de opmerking van deze avond als ze gewijzigd is.
+  function bewaarOpmerking(dagKey) {
+    // Loopt er al een bewaaractie voor deze avond, wacht die af en kijk daarna opnieuw.
+    if (state.opmBezig[dagKey]) return state.opmBezig[dagKey].then(function () { return bewaarOpmerking(dagKey); });
+    if (!state.concept.hasOwnProperty(dagKey)) return Promise.resolve(true);
+    var tekst = state.concept[dagKey].trim();
+    if (tekst === (state.opm[dagKey] || '')) { delete state.concept[dagKey]; return Promise.resolve(true); }
+    zetStatus(dagKey, 'bezig');
+    var p = roep('setOpmerking', dagKey, schoon(state.naam), tekst).then(function (o) {
+      state.opm = o || {};
+      if ((state.concept[dagKey] || '').trim() === tekst) delete state.concept[dagKey];
+      zetStatus(dagKey, 'bewaard');
+      meld(tekst ? '✓ Opmerking bewaard.' : 'Opmerking gewist.');
+      return true;
+    }).catch(function (e) {
+      zetStatus(dagKey, '');
+      meld((e && e.message) || 'Opmerking bewaren mislukt. Probeer opnieuw.', true);
+      return false;
+    }).then(function (ok) {
+      delete state.opmBezig[dagKey];
+      return ok;
+    });
+    state.opmBezig[dagKey] = p;
+    return p;
+  }
+
+  function zetStatus(dagKey, status) {
+    state.opmStatus[dagKey] = status;
+    var el = $app.querySelector('.opm-status');
+    var veld = document.getElementById('opm');
+    if (!el || !veld || veld.getAttribute('data-dag') !== dagKey) return;
+    el.className = 'opm-status' + (status === 'bewaard' ? ' ok' : '');
+    el.textContent = status === 'bewaard' ? '✓ Bewaard' : status === 'bezig' ? 'Bewaren…' : 'Wordt bewaard als je verder gaat.';
+  }
+
   function gaNaar(stap) {
+    var veld = document.getElementById('opm');
+    if (veld) {
+      // Eerst de opmerking van de huidige avond bewaren; bij een fout blijf je staan.
+      return bewaarOpmerking(veld.getAttribute('data-dag')).then(function (ok) { if (ok) toonStap(stap); });
+    }
+    toonStap(stap);
+  }
+
+  function toonStap(stap) {
     state.stap = Math.max(0, stap);
     render();
     try { window.scrollTo({ top: document.getElementById('app').offsetTop - 12, behavior: 'smooth' }); }
@@ -520,9 +622,11 @@
 
   function laad(stil) {
     return roep('getData').then(function (d) {
+      if (state.openstaand) return; // eigen keuzes onderweg: hun antwoord is recenter
       state.data = d;
-      // Het naamveld niet onder iemands vingers vervangen.
-      if (stil && state.stap === 0) return;
+      // Niet hertekenen terwijl iemand zijn naam of een opmerking aan het typen is.
+      var actief = document.activeElement;
+      if (stil && (state.stap === 0 || (actief && actief.id === 'opm'))) return;
       render();
     }).catch(function (e) {
       if (!stil) {
@@ -535,11 +639,27 @@
   // ---------- Interactie ----------
 
   $app.addEventListener('input', function (ev) {
+    if (ev.target.id === 'opm') {
+      var dagKey = ev.target.getAttribute('data-dag');
+      state.concept[dagKey] = ev.target.value.slice(0, MAX_OPM);
+      zetStatus(dagKey, '');
+      var t = $app.querySelector('.teller');
+      if (t) {
+        t.textContent = ev.target.value.length + ' / ' + MAX_OPM;
+        t.className = 'teller' + (ev.target.value.length >= MAX_OPM ? ' vol' : '');
+      }
+      return;
+    }
     if (ev.target.id !== 'naam') return;
     state.naam = ev.target.value;
     try { localStorage.setItem('bardienst-naam', schoon(state.naam)); } catch (e) {}
     var knop = $app.querySelector('[data-actie="start"]');
     if (knop) knop.disabled = !schoon(state.naam);
+  });
+
+  // Bewaren zodra je het opmerkingenveld verlaat.
+  $app.addEventListener('change', function (ev) {
+    if (ev.target.id === 'opm') bewaarOpmerking(ev.target.getAttribute('data-dag'));
   });
 
   $app.addEventListener('keydown', function (ev) {
@@ -548,10 +668,10 @@
 
   $app.addEventListener('click', function (ev) {
     var btn = ev.target.closest('button[data-actie]');
-    if (!btn || state.bezig) return;
+    if (!btn) return;
     var actie = btn.getAttribute('data-actie');
 
-    if (actie === 'start') { state.naam = schoon(state.naam); return gaNaar(1); }
+    if (actie === 'start') { state.naam = schoon(state.naam); laadOpmerkingen(); return gaNaar(1); }
     if (actie === 'hulp') return gaNaar(0);
     if (actie === 'naar') return gaNaar(parseInt(btn.getAttribute('data-stap'), 10));
     if (actie !== 'kies') return;
@@ -560,35 +680,48 @@
     if (!naam) return gaNaar(0);
     var dag = btn.getAttribute('data-dag'), functie = btn.getAttribute('data-functie');
     var voorkeur = btn.getAttribute('data-voorkeur');
-    var mijn = mijnKeuze(dag, functie);
-    var p;
-    if (btn.getAttribute('aria-pressed') === 'true' && mijn) {
-      // Nog eens klikken op de gekozen knop = keuze weghalen.
-      p = roep('removeSignup', mijn.id).then(function (d) { meld('Keuze weggehaald.'); return d; });
-    } else {
-      p = roep('addSignup', dag, functie, naam, voorkeur).then(function (d) {
-        meld(voorkeur === 'liefst' ? '♥ Bewaard: je helpt graag.' : '✓ Bewaard: je kan eventueel.');
-        return d;
-      });
-    }
+    // Nog eens klikken op de gekozen knop = keuze weghalen.
+    if (btn.getAttribute('aria-pressed') === 'true') voorkeur = '';
 
-    state.bezig = true;
-    $app.querySelectorAll('.keuze button').forEach(function (b) { b.disabled = true; });
-    btn.textContent = 'Even geduld…';
+    // Meteen tonen; het bewaren gebeurt op de achtergrond, in volgorde van klikken.
+    var vorige = state.data.inschrijvingen;
+    var lijst = vorige.filter(function (i) {
+      return !(i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase());
+    });
+    if (voorkeur) lijst.push({ id: 'nieuw', dag: dag, functie: functie, naam: naam, voorkeur: voorkeur });
+    state.data = Object.assign({}, state.data, { inschrijvingen: lijst });
+    render();
+    meld(!voorkeur ? 'Keuze weggehaald.' : voorkeur === 'liefst' ? '♥ Je helpt graag.' : '✓ Je kan eventueel.');
+
+    state.openstaand++;
+    var p = wachtrij.then(function () { return roep('setKeuze', dag, functie, naam, voorkeur); });
+    wachtrij = p.catch(function () {});
     p.then(function (d) {
-      state.data = d;
+      state.openstaand--;
+      if (!state.openstaand) { state.data = d; hertekenAlsVrij(); }
     }).catch(function (e) {
-      meld((e && e.message) || 'Opslaan mislukt. Probeer opnieuw.', true);
-    }).then(function () {
-      state.bezig = false;
-      render();
+      state.openstaand--;
+      meld(((e && e.message) || 'Opslaan mislukt.') + ' Je keuze is niet bewaard; probeer opnieuw.', true);
+      // Terug naar wat er echt bewaard is.
+      if (!state.openstaand) laad(false);
     });
   });
 
-  laad(false);
+  function hertekenAlsVrij() {
+    var actief = document.activeElement;
+    if (state.stap > 0 && !(actief && actief.id === 'opm')) render();
+  }
+
+  // Start: het rooster zit al in de pagina (via Code.gs). Los geopend: voorbeelddata.
+  var begin = null;
+  try { begin = JSON.parse(document.getElementById('begin').textContent); } catch (e) {}
+  if (begin && begin.dagen) { state.data = begin; render(); }
+  else laad(false);
+  laadOpmerkingen();
+
   // Houd de aantallen actueel terwijl de pagina open staat.
   setInterval(function () {
-    if (!document.hidden && !state.bezig) laad(true);
+    if (!document.hidden && !state.openstaand) laad(true);
   }, 30000);
 })();
 </script>

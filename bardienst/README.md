@@ -34,6 +34,11 @@ Bij de eerste keer openen maakt het script twee tabbladen aan in je Sheet:
 |------------------|-----------------------------------------------------------------------|
 | `Speeldagen`     | Eén rij per voorstelling: datum en optionele info (bv. "Première").   |
 | `Inschrijvingen` | Wie zich voor welke dienst op welke dag heeft ingeschreven.           |
+| `Opmerkingen`    | De vrije opmerking (max. 200 tekens) per persoon per speelavond.      |
+
+Het rooster wordt tot 5 minuten in de cache van Google bewaard, zodat de pagina
+snel laadt. Pas je zelf iets aan in het Sheet, dan wordt die cache automatisch
+leeggemaakt.
 
 ## Aanpassen
 
@@ -54,7 +59,10 @@ Bij de eerste keer openen maakt het script twee tabbladen aan in je Sheet:
 2. Ze krijgen per speelavond een "boarding pass" met de rollen (gates) onthaal,
    bar en kassa. Per rol kiezen ze **♥ Ik help graag** of **Ik kan eventueel ook**.
    Kunnen ze niet, dan duiden ze niets aan. Nog eens klikken haalt een keuze weg.
-3. Met **Volgende avond ✈** gaan ze verder; op het einde zien ze een overzicht
+3. Onderaan elke boarding pass kunnen ze een opmerking voor die avond kwijt
+   (max. 200 tekens, bv. "pas vanaf 20u"). Die ziet alleen de persoon zelf op
+   de pagina; jij vindt alle opmerkingen in het tabblad `Opmerkingen`.
+4. Met **Volgende avond ✈** gaan ze verder; op het einde zien ze een overzicht
    van hun keuzes, met per avond een knop **Wijzig**.
 
 Keuzes worden meteen bewaard. Per rol zie je of er nog mensen nodig zijn en wie

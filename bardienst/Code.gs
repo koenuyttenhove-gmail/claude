@@ -4,7 +4,12 @@
  * Opslag: het Google Sheet waaraan dit script gekoppeld is.
  *   - tabblad "Speeldagen":     één rij per voorstelling (Datum, Info)
  *   - tabblad "Inschrijvingen": één rij per naam per dienst
- * Beide tabbladen worden automatisch aangemaakt bij het eerste gebruik.
+ *   - tabblad "Opmerkingen":    één rij per naam per speelavond
+ * De tabbladen worden automatisch aangemaakt bij het eerste gebruik.
+ *
+ * Snelheid: het rooster wordt een paar minuten in de cache van Google bewaard,
+ * zodat niet elke bezoeker het Sheet opnieuw moet lezen. Wie zelf iets in het
+ * Sheet aanpast, maakt die cache automatisch leeg (zie onEdit).
  */
 
 // Titel bovenaan de pagina en in het browsertabblad.
@@ -36,14 +41,27 @@ const AFFICHE_URL = '';
 
 const MAX_NAAM = 40;
 
-// Voorkeur per inschrijving: 'liefst' = doet deze dienst het liefst, 'kan' = kan ook.
+// Voorkeur per inschrijving: 'liefst' = helpt graag, 'kan' = kan eventueel ook.
 const VOORKEUREN = ['liefst', 'kan'];
 
+// Maximale lengte van de vrije opmerking per avond.
+const MAX_OPMERKING = 200;
+
+const CACHE_SLEUTEL = 'rooster-v2';
+const CACHE_SECONDEN = 300;
+
 function doGet() {
-  sheets_();
-  return HtmlService.createHtmlOutputFromFile('index')
+  // Het rooster gaat meteen mee in de pagina: dat scheelt een extra aanvraag bij het openen.
+  const t = HtmlService.createTemplateFromFile('index');
+  t.begin = JSON.stringify(getData()).replace(/</g, '\\u003c');
+  return t.evaluate()
     .setTitle(TITEL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// Wordt automatisch uitgevoerd als iemand het Sheet met de hand aanpast.
+function onEdit() {
+  CacheService.getScriptCache().remove(CACHE_SLEUTEL);
 }
 
 function sheets_() {
@@ -81,7 +99,23 @@ function dagKey_(waarde, tz) {
   return String(waarde || '').trim();
 }
 
+function schoonNaam_(naam) {
+  naam = String(naam || '').replace(/\s+/g, ' ').trim();
+  if (!naam) throw new Error('Vul eerst je naam in.');
+  if (naam.length > MAX_NAAM) throw new Error('Je naam mag maximaal ' + MAX_NAAM + ' tekens lang zijn.');
+  return naam;
+}
+
+// Het rooster, uit de cache als het kan.
 function getData() {
+  const c = CacheService.getScriptCache().get(CACHE_SLEUTEL);
+  const data = c ? JSON.parse(c) : leesData_();
+  data.vandaag = Utilities.formatDate(new Date(), data.tz, 'yyyy-MM-dd');
+  return data;
+}
+
+// Leest het rooster rechtstreeks uit het Sheet en zet het in de cache.
+function leesData_() {
   const s = sheets_();
   const tz = s.ss.getSpreadsheetTimeZone();
 
@@ -101,28 +135,47 @@ function getData() {
       };
     });
 
-  return {
+  const data = {
     titel: TITEL,
     affiche: AFFICHE_URL,
     functies: FUNCTIES,
     dagen: dagen,
     inschrijvingen: inschrijvingen,
-    vandaag: Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'),
+    tz: tz,
   };
+  bewaarInCache_(data);
+  return data;
 }
 
-// Schrijft in, of past de voorkeur aan als deze naam al op deze dienst staat.
-function addSignup(dag, functie, naam, voorkeur) {
-  voorkeur = VOORKEUREN.indexOf(voorkeur) >= 0 ? voorkeur : 'kan';
-  naam = String(naam || '').replace(/\s+/g, ' ').trim();
-  if (!naam) throw new Error('Vul eerst je naam in.');
-  if (naam.length > MAX_NAAM) throw new Error('Je naam mag maximaal ' + MAX_NAAM + ' tekens lang zijn.');
+function bewaarInCache_(data) {
+  try {
+    CacheService.getScriptCache().put(CACHE_SLEUTEL, JSON.stringify(data), CACHE_SECONDEN);
+  } catch (e) {
+    // Te groot voor de cache: dan lezen we gewoon telkens uit het Sheet.
+  }
+}
+
+function rijVanId_(ins, id) {
+  const n = ins.getLastRow() - 1;
+  if (n <= 0) return -1;
+  const ids = ins.getRange(2, 1, n, 1).getValues();
+  for (let r = 0; r < ids.length; r++) {
+    if (String(ids[r][0]) === String(id)) return r + 2;
+  }
+  return -1;
+}
+
+// Zet de keuze van deze persoon voor deze dienst:
+// voorkeur 'liefst' of 'kan' = inschrijven of aanpassen, '' = weghalen.
+function setKeuze(dag, functie, naam, voorkeur) {
+  naam = schoonNaam_(naam);
+  if (voorkeur && VOORKEUREN.indexOf(voorkeur) < 0) throw new Error('Onbekende keuze.');
   if (!FUNCTIES.some(function (f) { return f.id === functie; })) throw new Error('Onbekende dienst.');
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const data = getData();
+    const data = leesData_();
     if (!data.dagen.some(function (d) { return d.key === dag; })) {
       throw new Error('Deze speeldag bestaat niet meer. Vernieuw de pagina.');
     }
@@ -130,41 +183,97 @@ function addSignup(dag, functie, naam, voorkeur) {
       return i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase();
     })[0];
     const ins = sheets_().ins;
-    if (!bestaand) {
-      ins.appendRow([Utilities.getUuid(), dag, functie, naam, new Date(), voorkeur]);
+
+    if (!voorkeur) {
+      if (bestaand) {
+        const rij = rijVanId_(ins, bestaand.id);
+        if (rij > 0) ins.deleteRow(rij);
+        data.inschrijvingen = data.inschrijvingen.filter(function (i) { return i !== bestaand; });
+      }
+    } else if (!bestaand) {
+      const id = Utilities.getUuid();
+      ins.appendRow([id, dag, functie, naam, new Date(), voorkeur]);
+      data.inschrijvingen.push({ id: id, dag: dag, functie: functie, naam: naam, voorkeur: voorkeur });
     } else if (bestaand.voorkeur !== voorkeur) {
-      const ids = ins.getRange(2, 1, ins.getLastRow() - 1, 1).getValues();
-      for (let r = 0; r < ids.length; r++) {
-        if (String(ids[r][0]) === bestaand.id) {
-          ins.getRange(r + 2, 6).setValue(voorkeur);
+      const rij = rijVanId_(ins, bestaand.id);
+      if (rij > 0) ins.getRange(rij, 6).setValue(voorkeur);
+      bestaand.voorkeur = voorkeur;
+    }
+    SpreadsheetApp.flush();
+    bewaarInCache_(data);
+    data.vandaag = Utilities.formatDate(new Date(), data.tz, 'yyyy-MM-dd');
+    return data;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ---------- Opmerkingen: één per persoon per speelavond ----------
+// Iedereen krijgt alleen zijn eigen opmerkingen terug; alles staat in het Sheet.
+
+function opmerkingenSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('Opmerkingen');
+  if (!sh) {
+    sh = ss.insertSheet('Opmerkingen');
+    // Tekstopmaak, zodat bv. "=..." nooit als formule gelezen wordt.
+    sh.getRange('A:C').setNumberFormat('@');
+    sh.getRange(1, 1, 1, 4).setValues([['Datum', 'Naam', 'Opmerking', 'Laatst gewijzigd']]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(3, 420);
+  }
+  return sh;
+}
+
+function getMijnOpmerkingen(naam) {
+  naam = String(naam || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const uit = {};
+  if (!naam) return uit;
+  const sh = opmerkingenSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n <= 0) return uit;
+  const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  sh.getRange(2, 1, n, 3).getValues().forEach(function (r) {
+    if (String(r[1]).toLowerCase() === naam && r[2] !== '') uit[dagKey_(r[0], tz)] = String(r[2]);
+  });
+  return uit;
+}
+
+// Bewaart de opmerking van deze persoon voor deze avond; een lege opmerking wist ze.
+function setOpmerking(dag, naam, tekst) {
+  naam = schoonNaam_(naam);
+  tekst = String(tekst || '').trim();
+  if (tekst.length > MAX_OPMERKING) throw new Error('Je opmerking mag maximaal ' + MAX_OPMERKING + ' tekens lang zijn.');
+  if (!getData().dagen.some(function (d) { return d.key === dag; })) {
+    throw new Error('Deze speeldag bestaat niet meer. Vernieuw de pagina.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = opmerkingenSheet_();
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const n = sh.getLastRow() - 1;
+    let rij = -1;
+    if (n > 0) {
+      const rows = sh.getRange(2, 1, n, 2).getValues();
+      for (let r = 0; r < rows.length; r++) {
+        if (dagKey_(rows[r][0], tz) === dag && String(rows[r][1]).toLowerCase() === naam.toLowerCase()) {
+          rij = r + 2;
           break;
         }
       }
+    }
+    if (!tekst) {
+      if (rij > 0) sh.deleteRow(rij);
+    } else if (rij > 0) {
+      sh.getRange(rij, 3, 1, 2).setValues([[tekst, new Date()]]);
+    } else {
+      sh.appendRow([dag, naam, tekst, new Date()]);
     }
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
-  return getData();
-}
-
-function removeSignup(id) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const ins = sheets_().ins;
-    const n = ins.getLastRow() - 1;
-    if (n > 0) {
-      const ids = ins.getRange(2, 1, n, 1).getValues();
-      for (let r = ids.length - 1; r >= 0; r--) {
-        if (String(ids[r][0]) === String(id)) {
-          ins.deleteRow(r + 2);
-          break;
-        }
-      }
-    }
-  } finally {
-    lock.releaseLock();
-  }
-  return getData();
+  return getMijnOpmerkingen(naam);
 }
