@@ -15,8 +15,8 @@
 // Titel bovenaan de pagina en in het browsertabblad.
 const TITEL = 'Bardienst';
 
-// De diensten per speeldag en hoeveel mensen er minstens nodig zijn.
-// Meer mensen mogen zich altijd inschrijven.
+// De diensten per speeldag. "nodig" is het aantal mensen dat je minstens zoekt: dat is
+// voor jezelf (leden zien dit niet). Meer mensen mogen zich altijd inschrijven.
 const FUNCTIES = [
   { id: 'onthaal', naam: 'Onthaal', nodig: 2 },
   { id: 'bar', naam: 'Bar', nodig: 3 },
@@ -53,7 +53,8 @@ const CACHE_SECONDEN = 300;
 function doGet() {
   // Het rooster gaat meteen mee in de pagina: dat scheelt een extra aanvraag bij het openen.
   const t = HtmlService.createTemplateFromFile('index');
-  t.begin = JSON.stringify(getData()).replace(/</g, '\\u003c');
+  // Zonder naam: geen enkele inschrijving. Leden krijgen later alleen hun eigen keuzes.
+  t.begin = JSON.stringify(publiekVoor_(rooster_(), '')).replace(/</g, '\\u003c');
   return t.evaluate()
     .setTitle(TITEL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -99,19 +100,43 @@ function dagKey_(waarde, tz) {
   return String(waarde || '').trim();
 }
 
+// Een geldige naam bevat minstens één letter (dus niet "0" of "...").
+function geldigeNaam_(naam) {
+  return /\p{L}/u.test(String(naam || ''));
+}
+
 function schoonNaam_(naam) {
   naam = String(naam || '').replace(/\s+/g, ' ').trim();
   if (!naam) throw new Error('Vul eerst je naam in.');
+  if (!geldigeNaam_(naam)) throw new Error('Je naam moet minstens één letter bevatten.');
   if (naam.length > MAX_NAAM) throw new Error('Je naam mag maximaal ' + MAX_NAAM + ' tekens lang zijn.');
   return naam;
 }
 
-// Het rooster, uit de cache als het kan.
-function getData() {
+// Het volledige rooster met ALLE inschrijvingen, uit de cache als het kan.
+// Dit gaat nooit rechtstreeks naar de pagina: gebruik publiekVoor_.
+function rooster_() {
   const c = CacheService.getScriptCache().get(CACHE_SLEUTEL);
-  const data = c ? JSON.parse(c) : leesData_();
-  data.vandaag = Utilities.formatDate(new Date(), data.tz, 'yyyy-MM-dd');
-  return data;
+  return c ? JSON.parse(c) : leesData_();
+}
+
+// Wat een lid te zien krijgt: de speeldagen, de diensten en alleen de eigen keuzes.
+// Inschrijvingen van anderen en aantallen verlaten de server nooit.
+function publiekVoor_(data, naam) {
+  const n = geldigeNaam_(naam) ? String(naam).replace(/\s+/g, ' ').trim().toLowerCase() : '';
+  return {
+    titel: data.titel,
+    affiche: data.affiche,
+    functies: data.functies.map(function (f) { return { id: f.id, naam: f.naam }; }),
+    dagen: data.dagen,
+    inschrijvingen: n ? data.inschrijvingen.filter(function (i) { return i.naam.toLowerCase() === n; }) : [],
+    vandaag: Utilities.formatDate(new Date(), data.tz, 'yyyy-MM-dd'),
+  };
+}
+
+// De pagina vraagt dit op met de ingevulde naam.
+function getData(naam) {
+  return publiekVoor_(rooster_(), naam);
 }
 
 // Leest het rooster rechtstreeks uit het Sheet en zet het in de cache.
@@ -201,8 +226,7 @@ function setKeuze(dag, functie, naam, voorkeur) {
     }
     SpreadsheetApp.flush();
     bewaarInCache_(data);
-    data.vandaag = Utilities.formatDate(new Date(), data.tz, 'yyyy-MM-dd');
-    return data;
+    return publiekVoor_(data, naam);
   } finally {
     lock.releaseLock();
   }
@@ -243,7 +267,7 @@ function rijVanNaam_(sh, naam) {
 
 function getMijnOpmerking(naam) {
   naam = String(naam || '').replace(/\s+/g, ' ').trim();
-  if (!naam) return '';
+  if (!geldigeNaam_(naam)) return '';
   const sh = opmerkingenSheet_();
   const rij = rijVanNaam_(sh, naam);
   return rij > 0 ? String(sh.getRange(rij, 2).getValue()) : '';

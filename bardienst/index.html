@@ -96,6 +96,7 @@
   #naam { border-color: var(--groen); }
   #naam:focus, #opm:focus { border-color: var(--groen); outline: none; }
   .hint { color: var(--muted); font-size: 14px; margin: 0; }
+  .hint.fout { color: var(--tekort); font-weight: 700; }
 
   /* ---------- Speelavonden ---------- */
   .avonden { display: grid; gap: 14px; }
@@ -107,13 +108,7 @@
 
   .rol { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 8px 16px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
   .ak + .rol { border-top: 0; }
-  .rk { display: flex; align-items: center; gap: 8px; }
   .rk b { font: 700 18px var(--smal); text-transform: uppercase; letter-spacing: .04em; }
-  .pil { font: 700 12px var(--body); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-  .pil.tekort { background: var(--tekort-soft); color: var(--tekort); }
-  .pil.ok { background: var(--ok-soft); color: var(--ok); }
-  .wie { font-size: 14px; color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
-  .wie .ik { background: var(--mine); color: var(--mine-ink); font-weight: 700; border-radius: 4px; padding: 0 4px; }
 
   .keuze { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .keuze button {
@@ -224,6 +219,7 @@
 (function () {
   var ECHT = typeof google !== 'undefined' && google.script && google.script.run;
   var MAX_OPM = 200;
+  var GELDIG = /\p{L}/u; // een naam moet minstens één letter bevatten
 
   // Voorbeelddata voor als de pagina los (buiten Google) geopend wordt.
   var demo = {
@@ -231,9 +227,9 @@
       titel: 'Bardienst',
       affiche: '',
       functies: [
-        { id: 'onthaal', naam: 'Onthaal', nodig: 2 },
-        { id: 'bar', naam: 'Bar', nodig: 3 },
-        { id: 'kassa', naam: 'Kassa', nodig: 1 }
+        { id: 'onthaal', naam: 'Onthaal' },
+        { id: 'bar', naam: 'Bar' },
+        { id: 'kassa', naam: 'Kassa' }
       ],
       dagen: [
         { key: '2026-11-07', info: 'Première' },
@@ -241,30 +237,29 @@
         { key: '2026-11-14', info: '' },
         { key: '2026-11-17', info: '' }
       ],
-      inschrijvingen: [
-        { id: 'd1', dag: '2026-11-07', functie: 'onthaal', naam: 'Els V.', voorkeur: 'liefst' },
-        { id: 'd3', dag: '2026-11-07', functie: 'bar', naam: 'Sarah M.', voorkeur: 'kan' },
-        { id: 'd4', dag: '2026-11-07', functie: 'bar', naam: 'Pieter C.', voorkeur: 'liefst' },
-        { id: 'd6', dag: '2026-11-07', functie: 'kassa', naam: 'Marc H.', voorkeur: 'liefst' },
-        { id: 'd7', dag: '2026-11-13', functie: 'onthaal', naam: 'Els V.', voorkeur: 'kan' },
-        { id: 'd8', dag: '2026-11-13', functie: 'onthaal', naam: 'Ann W.', voorkeur: 'liefst' },
-        { id: 'd10', dag: '2026-11-14', functie: 'kassa', naam: 'Marc H.', voorkeur: 'kan' },
-        { id: 'd11', dag: '2026-11-14', functie: 'kassa', naam: 'Ann W.', voorkeur: 'liefst' }
-      ],
+      inschrijvingen: [], // de voorbeeldweergave start leeg; je ziet alleen wat je zelf aanklikt
       vandaag: '2026-10-05'
     },
     teller: 100,
     opm: {},
-    getData: function () { return this.data; },
+    // Net als op de server: je krijgt alleen je eigen keuzes terug.
+    eigen: function (naam) {
+      var n = GELDIG.test(naam || '') ? String(naam).replace(/\s+/g, ' ').trim().toLowerCase() : '';
+      var c = JSON.parse(JSON.stringify(this.data));
+      c.inschrijvingen = c.inschrijvingen.filter(function (i) { return n && i.naam.toLowerCase() === n; });
+      return c;
+    },
+    getData: function (naam) { return this.eigen(naam); },
     setKeuze: function (dag, functie, naam, voorkeur) {
       naam = String(naam || '').replace(/\s+/g, ' ').trim();
       if (!naam) throw new Error('Vul eerst je naam in.');
+      if (!GELDIG.test(naam)) throw new Error('Je naam moet minstens één letter bevatten.');
       var lijst = this.data.inschrijvingen.filter(function (i) {
         return !(i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase());
       });
       if (voorkeur) lijst.push({ id: 'd' + (this.teller++), dag: dag, functie: functie, naam: naam, voorkeur: voorkeur });
       this.data.inschrijvingen = lijst;
-      return JSON.parse(JSON.stringify(this.data));
+      return this.eigen(naam);
     },
     getMijnOpmerking: function (naam) { return this.opm[String(naam).trim().toLowerCase()] || ''; },
     setOpmerking: function (naam, tekst) {
@@ -301,6 +296,7 @@
   var $melding = document.getElementById('melding');
 
   try { state.naam = localStorage.getItem('bardienst-naam') || ''; } catch (e) {}
+  if (!GELDIG.test(state.naam)) state.naam = '';
   $naam.value = state.naam;
   if (!ECHT) document.getElementById('demo').hidden = false;
 
@@ -320,7 +316,12 @@
   }
 
   function schoon(naam) { return String(naam || '').replace(/\s+/g, ' ').trim(); }
-  function ik() { return schoon(state.naam).toLowerCase(); }
+  // Pas een naam met minstens één letter telt als ingevuld.
+  function geldig() { return GELDIG.test(state.naam); }
+  function ik() { return geldig() ? schoon(state.naam).toLowerCase() : ''; }
+  function naamMelding() {
+    return schoon(state.naam) ? 'Je naam moet minstens één letter bevatten.' : 'Vul eerst je naam in bovenaan.';
+  }
 
   function datum(key) {
     var d = new Date(key + 'T12:00:00');
@@ -344,12 +345,6 @@
     return d.dagen.filter(function (dag) { return dag.key >= d.vandaag; });
   }
 
-  function lijstVoor(dagKey, functieId) {
-    var l = state.data.inschrijvingen.filter(function (i) { return i.dag === dagKey && i.functie === functieId; });
-    return l.filter(function (i) { return i.voorkeur === 'liefst'; })
-      .concat(l.filter(function (i) { return i.voorkeur !== 'liefst'; }));
-  }
-
   function mijnKeuze(dagKey, functieId) {
     var naam = ik();
     if (!naam) return null;
@@ -364,7 +359,7 @@
     document.title = data.titel;
     toonAffiche(data.affiche);
     var lijst = avonden();
-    var heeftNaam = !!schoon(state.naam);
+    var heeftNaam = geldig();
     var totaal = 0;
 
     if (!lijst.length) {
@@ -375,8 +370,6 @@
     $avonden.innerHTML = lijst.map(function (dag) {
       var mijnAantal = 0;
       var rollen = data.functies.map(function (f) {
-        var l = lijstVoor(dag.key, f.id);
-        var tekort = Math.max(0, f.nodig - l.length);
         var mijn = mijnKeuze(dag.key, f.id);
         if (mijn) mijnAantal++;
         var knop = function (voorkeur, label) {
@@ -384,14 +377,7 @@
           return '<button type="button" data-voorkeur="' + voorkeur + '" data-dag="' + esc(dag.key) + '" data-functie="' + esc(f.id) +
             '" aria-pressed="' + aan + '">' + (aan ? '✓ ' : '') + label + '</button>';
         };
-        var wie = l.length
-          ? 'Al opgegeven: ' + l.map(function (p) {
-              return p.naam.toLowerCase() === ik() ? '<span class="ik">' + esc(p.naam) + ' (jij)</span>' : esc(p.naam);
-            }).join(', ')
-          : 'Nog niemand opgegeven.';
-        return '<div class="rol"><div><div class="rk"><b>' + esc(f.naam) + '</b>' +
-          (tekort ? '<span class="pil tekort">nog ' + tekort + ' nodig</span>' : '<span class="pil ok">' + l.length + ' / ' + f.nodig + ' ok</span>') +
-          '</div><div class="wie">' + wie + '</div></div>' +
+        return '<div class="rol"><div class="rk"><b>' + esc(f.naam) + '</b></div>' +
           '<div class="keuze' + (heeftNaam ? '' : ' uit') + '" role="group" aria-label="Jouw keuze voor ' + esc(f.naam) + '">' +
           knop('liefst', 'Ik help graag (voorkeur)') + knop('kan', 'Ik kan eventueel ook') + '</div></div>';
       }).join('');
@@ -402,14 +388,20 @@
         '</div>' + rollen + '</section>';
     }).join('');
 
-    $hint.textContent = !heeftNaam ? 'Gebruik telkens dezelfde naam, dan vinden we je keuzes terug.'
+    var fout = !heeftNaam && !!schoon(state.naam);
+    $hint.className = 'hint' + (fout ? ' fout' : '');
+    $hint.textContent = fout ? 'Je naam moet minstens één letter bevatten.'
+      : !heeftNaam ? 'Gebruik telkens dezelfde naam, dan vinden we je keuzes terug. Je ziet alleen je eigen keuzes.'
       : totaal ? 'Je hebt ' + totaal + (totaal === 1 ? ' keuze' : ' keuzes') + ' doorgegeven.'
       : 'Je hebt nog niets aangeduid.';
   }
 
+  // Haalt de speeldagen en de keuzes van de ingevulde naam op (andere namen krijg je nooit te zien).
   function laad(stil) {
-    return roep('getData').then(function (d) {
+    var naam = geldig() ? schoon(state.naam) : '';
+    return roep('getData', naam).then(function (d) {
       if (state.openstaand) return; // eigen keuzes onderweg: hun antwoord is recenter
+      if ((geldig() ? schoon(state.naam) : '') !== naam) return; // intussen een andere naam
       state.data = d;
       render();
     }).catch(function (e) {
@@ -434,7 +426,7 @@
 
   function laadOpmerking() {
     var naam = schoon(state.naam);
-    if (!naam) return;
+    if (!geldig()) return;
     roep('getMijnOpmerking', naam).then(function (t) {
       if (schoon(state.naam) !== naam) return; // intussen een andere naam
       state.opmBewaard = t || '';
@@ -445,7 +437,7 @@
   var opmBezig = null;
   function bewaarOpmerking() {
     var naam = schoon(state.naam);
-    if (!naam) { meld('Vul eerst je naam in bovenaan.', true); $naam.focus(); return Promise.resolve(false); }
+    if (!geldig()) { meld(naamMelding(), true); $naam.focus(); return Promise.resolve(false); }
     if (opmBezig) return opmBezig.then(bewaarOpmerking);
     var tekst = $opm.value.trim();
     if (!state.opmVuil && tekst === state.opmBewaard) return Promise.resolve(true);
@@ -469,10 +461,12 @@
   var naamTimer;
   $naam.addEventListener('input', function () {
     state.naam = $naam.value;
-    try { localStorage.setItem('bardienst-naam', schoon(state.naam)); } catch (e) {}
+    try { localStorage.setItem('bardienst-naam', geldig() ? schoon(state.naam) : ''); } catch (e) {}
+    // Een andere naam: de keuzes van de vorige naam meteen wissen.
+    if (state.data) state.data = Object.assign({}, state.data, { inschrijvingen: [] });
     render();
     clearTimeout(naamTimer);
-    naamTimer = setTimeout(laadOpmerking, 600);
+    naamTimer = setTimeout(function () { laad(true); laadOpmerking(); }, 600);
   });
   $naam.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') $naam.blur(); });
 
@@ -481,15 +475,15 @@
     opmStatus('');
     opmTeller();
   });
-  $opm.addEventListener('change', function () { if (schoon(state.naam)) bewaarOpmerking(); });
+  $opm.addEventListener('change', function () { if (geldig()) bewaarOpmerking(); });
   $opmKnop.addEventListener('click', bewaarOpmerking);
 
   $avonden.addEventListener('click', function (ev) {
     var btn = ev.target.closest('button[data-voorkeur]');
     if (!btn) return;
     var naam = schoon(state.naam);
-    if (!naam) {
-      meld('Vul eerst je naam in bovenaan.', true);
+    if (!geldig()) {
+      meld(naamMelding(), true);
       $naam.focus();
       try { $naam.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
       return;
@@ -513,7 +507,8 @@
     wachtrij = p.catch(function () {});
     p.then(function (d) {
       state.openstaand--;
-      if (!state.openstaand) { state.data = d; render(); }
+      if (state.openstaand) return;
+      if (schoon(state.naam) === naam) { state.data = d; render(); } else laad(true);
     }).catch(function (e) {
       state.openstaand--;
       meld(((e && e.message) || 'Opslaan mislukt.') + ' Je keuze is niet bewaard; probeer opnieuw.', true);
@@ -524,14 +519,9 @@
   // Start: het rooster zit al in de pagina (via Code.gs). Los geopend: voorbeelddata.
   var begin = null;
   try { begin = JSON.parse(document.getElementById('begin').textContent); } catch (e) {}
-  if (begin && begin.dagen) { state.data = begin; render(); }
+  if (begin && begin.dagen) { state.data = begin; render(); if (geldig()) laad(true); }
   else laad(false);
   laadOpmerking();
-
-  // Houd de aantallen actueel terwijl de pagina open staat.
-  setInterval(function () {
-    if (!document.hidden && !state.openstaand) laad(true);
-  }, 30000);
 })();
 </script>
 </body>

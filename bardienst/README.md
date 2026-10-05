@@ -45,8 +45,8 @@ leeggemaakt.
 - **Speeldagen toevoegen of wijzigen**: pas het tabblad `Speeldagen` aan (datum
   in kolom A). De webpagina toont automatisch de nieuwe lijst. Voorbije dagen
   worden grijs weergegeven.
-- **Aantal mensen per dienst of andere diensten**: pas `FUNCTIES` bovenaan
-  `Code.gs` aan. Klik daarna op **Implementeren → Implementaties beheren →
+- **Andere diensten**: pas `FUNCTIES` bovenaan `Code.gs` aan (het getal `nodig`
+  is alleen voor jezelf; leden zien het niet). Klik daarna op **Implementeren → Implementaties beheren →
   potloodje → Versie: Nieuwe versie → Implementeren**, zodat de link hetzelfde blijft.
 - **Titel**: pas `TITEL` aan in `Code.gs`.
 - **Nieuw seizoen**: maak het tabblad `Inschrijvingen` leeg (behalve de kopregel)
@@ -65,12 +65,16 @@ Alles staat op één pagina, onder elkaar:
 3. Onderaan één vrij **opmerkingenveld** (max. 200 tekens, optioneel). Het wordt
    bewaard als ze het veld verlaten, of met de knop **Opmerking bewaren**.
 
-Keuzes worden meteen bewaard. Per rol zie je of er nog mensen nodig zijn en wie
-al is opgegeven (wie "voorkeur" koos, staat vooraan). In het tabblad
-`Inschrijvingen` staat de keuze in de kolom `Voorkeur` als `liefst` (voorkeur)
-of `kan` (eventueel). Iedereen ziet alleen zijn eigen opmerking op de pagina;
-jij vindt ze allemaal in het tabblad `Opmerkingen`. Voorbije speelavonden worden
-niet meer getoond.
+Keuzes worden meteen bewaard. **Leden zien alleen hun eigen keuzes**, nooit die
+van anderen, en ook geen aantallen: de pagina krijgt van de server alleen de
+keuzes van de ingevulde naam. Jij ziet alles in het Sheet. In het tabblad
+`Inschrijvingen` staat de keuze in de kolom `Voorkeur` als `liefst` (voorkeur) of
+`kan` (eventueel). Opmerkingen staan in het tabblad `Opmerkingen`. Een naam moet
+minstens één letter bevatten (dus niet "0" of "..."). Voorbije speelavonden
+worden niet meer getoond.
+
+Let op: een naam is geen wachtwoord. Wie exact dezelfde naam intypt, ziet en
+wijzigt de keuzes van die naam. Voor een toneelvereniging is dat meestal oké.
 
 ## Uitproberen zonder installatie
 
