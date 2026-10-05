@@ -36,6 +36,9 @@ const AFFICHE_URL = '';
 
 const MAX_NAAM = 40;
 
+// Voorkeur per inschrijving: 'liefst' = doet deze dienst het liefst, 'kan' = kan ook.
+const VOORKEUREN = ['liefst', 'kan'];
+
 function doGet() {
   sheets_();
   return HtmlService.createHtmlOutputFromFile('index')
@@ -64,6 +67,11 @@ function sheets_() {
     ins.getRange(1, 1, 1, 5).setValues([['Id', 'Datum', 'Functie', 'Naam', 'Ingeschreven op']]).setFontWeight('bold');
     ins.setFrozenRows(1);
   }
+  // Kolom Voorkeur (ook voor Sheets die vóór deze kolom bestonden).
+  if (ins.getRange(1, 6).getValue() === '') {
+    ins.getRange('F:F').setNumberFormat('@');
+    ins.getRange(1, 6).setValue('Voorkeur').setFontWeight('bold');
+  }
 
   return { ss: ss, dagen: dagen, ins: ins };
 }
@@ -84,10 +92,13 @@ function getData() {
     .sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
 
   const nIns = s.ins.getLastRow() - 1;
-  const inschrijvingen = (nIns > 0 ? s.ins.getRange(2, 1, nIns, 4).getValues() : [])
+  const inschrijvingen = (nIns > 0 ? s.ins.getRange(2, 1, nIns, 6).getValues() : [])
     .filter(function (r) { return r[0] && r[3]; })
     .map(function (r) {
-      return { id: String(r[0]), dag: dagKey_(r[1], tz), functie: String(r[2]), naam: String(r[3]) };
+      return {
+        id: String(r[0]), dag: dagKey_(r[1], tz), functie: String(r[2]), naam: String(r[3]),
+        voorkeur: String(r[5]) === 'liefst' ? 'liefst' : 'kan',
+      };
     });
 
   return {
@@ -100,7 +111,9 @@ function getData() {
   };
 }
 
-function addSignup(dag, functie, naam) {
+// Schrijft in, of past de voorkeur aan als deze naam al op deze dienst staat.
+function addSignup(dag, functie, naam, voorkeur) {
+  voorkeur = VOORKEUREN.indexOf(voorkeur) >= 0 ? voorkeur : 'kan';
   naam = String(naam || '').replace(/\s+/g, ' ').trim();
   if (!naam) throw new Error('Vul eerst je naam in.');
   if (naam.length > MAX_NAAM) throw new Error('Je naam mag maximaal ' + MAX_NAAM + ' tekens lang zijn.');
@@ -113,13 +126,22 @@ function addSignup(dag, functie, naam) {
     if (!data.dagen.some(function (d) { return d.key === dag; })) {
       throw new Error('Deze speeldag bestaat niet meer. Vernieuw de pagina.');
     }
-    const alIngeschreven = data.inschrijvingen.some(function (i) {
+    const bestaand = data.inschrijvingen.filter(function (i) {
       return i.dag === dag && i.functie === functie && i.naam.toLowerCase() === naam.toLowerCase();
-    });
-    if (!alIngeschreven) {
-      sheets_().ins.appendRow([Utilities.getUuid(), dag, functie, naam, new Date()]);
-      SpreadsheetApp.flush();
+    })[0];
+    const ins = sheets_().ins;
+    if (!bestaand) {
+      ins.appendRow([Utilities.getUuid(), dag, functie, naam, new Date(), voorkeur]);
+    } else if (bestaand.voorkeur !== voorkeur) {
+      const ids = ins.getRange(2, 1, ins.getLastRow() - 1, 1).getValues();
+      for (let r = 0; r < ids.length; r++) {
+        if (String(ids[r][0]) === bestaand.id) {
+          ins.getRange(r + 2, 6).setValue(voorkeur);
+          break;
+        }
+      }
     }
+    SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
