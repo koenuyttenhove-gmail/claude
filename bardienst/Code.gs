@@ -4,7 +4,7 @@
  * Opslag: het Google Sheet waaraan dit script gekoppeld is.
  *   - tabblad "Speeldagen":     één rij per voorstelling (Datum, Info)
  *   - tabblad "Inschrijvingen": één rij per naam per dienst
- *   - tabblad "Opmerkingen":    één rij per naam per speelavond
+ *   - tabblad "Opmerkingen":    één opmerking per naam
  * De tabbladen worden automatisch aangemaakt bij het eerste gebruik.
  *
  * Snelheid: het rooster wordt een paar minuten in de cache van Google bewaard,
@@ -44,7 +44,7 @@ const MAX_NAAM = 40;
 // Voorkeur per inschrijving: 'liefst' = helpt graag, 'kan' = kan eventueel ook.
 const VOORKEUREN = ['liefst', 'kan'];
 
-// Maximale lengte van de vrije opmerking per avond.
+// Maximale lengte van de vrije opmerking.
 const MAX_OPMERKING = 200;
 
 const CACHE_SLEUTEL = 'rooster-v2';
@@ -208,72 +208,68 @@ function setKeuze(dag, functie, naam, voorkeur) {
   }
 }
 
-// ---------- Opmerkingen: één per persoon per speelavond ----------
-// Iedereen krijgt alleen zijn eigen opmerkingen terug; alles staat in het Sheet.
+// ---------- Opmerking: één per persoon, voor de hele bardienst ----------
+// Tabblad "Opmerkingen" (Naam, Opmerking, Laatst gewijzigd).
+// Iedereen krijgt alleen zijn eigen opmerking terug; alles staat in het Sheet.
 
 function opmerkingenSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Opmerkingen');
+  // Een oudere versie had hier een opmerking per avond (eerste kolom "Datum"): die laten we ongemoeid.
+  if (sh && sh.getRange(1, 1).getValue() === 'Datum') {
+    sh.setName('Opmerkingen per avond (oud)');
+    sh = null;
+  }
   if (!sh) {
     sh = ss.insertSheet('Opmerkingen');
     // Tekstopmaak, zodat bv. "=..." nooit als formule gelezen wordt.
-    sh.getRange('A:C').setNumberFormat('@');
-    sh.getRange(1, 1, 1, 4).setValues([['Datum', 'Naam', 'Opmerking', 'Laatst gewijzigd']]).setFontWeight('bold');
+    sh.getRange('A:B').setNumberFormat('@');
+    sh.getRange(1, 1, 1, 3).setValues([['Naam', 'Opmerking', 'Laatst gewijzigd']]).setFontWeight('bold');
     sh.setFrozenRows(1);
-    sh.setColumnWidth(3, 420);
+    sh.setColumnWidth(2, 460);
   }
   return sh;
 }
 
-function getMijnOpmerkingen(naam) {
-  naam = String(naam || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const uit = {};
-  if (!naam) return uit;
-  const sh = opmerkingenSheet_();
+function rijVanNaam_(sh, naam) {
   const n = sh.getLastRow() - 1;
-  if (n <= 0) return uit;
-  const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-  sh.getRange(2, 1, n, 3).getValues().forEach(function (r) {
-    if (String(r[1]).toLowerCase() === naam && r[2] !== '') uit[dagKey_(r[0], tz)] = String(r[2]);
-  });
-  return uit;
+  if (n <= 0) return -1;
+  const namen = sh.getRange(2, 1, n, 1).getValues();
+  for (let r = 0; r < namen.length; r++) {
+    if (String(namen[r][0]).toLowerCase() === naam.toLowerCase()) return r + 2;
+  }
+  return -1;
 }
 
-// Bewaart de opmerking van deze persoon voor deze avond; een lege opmerking wist ze.
-function setOpmerking(dag, naam, tekst) {
+function getMijnOpmerking(naam) {
+  naam = String(naam || '').replace(/\s+/g, ' ').trim();
+  if (!naam) return '';
+  const sh = opmerkingenSheet_();
+  const rij = rijVanNaam_(sh, naam);
+  return rij > 0 ? String(sh.getRange(rij, 2).getValue()) : '';
+}
+
+// Bewaart de opmerking van deze persoon; een lege opmerking wist ze.
+function setOpmerking(naam, tekst) {
   naam = schoonNaam_(naam);
   tekst = String(tekst || '').trim();
   if (tekst.length > MAX_OPMERKING) throw new Error('Je opmerking mag maximaal ' + MAX_OPMERKING + ' tekens lang zijn.');
-  if (!getData().dagen.some(function (d) { return d.key === dag; })) {
-    throw new Error('Deze speeldag bestaat niet meer. Vernieuw de pagina.');
-  }
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const sh = opmerkingenSheet_();
-    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-    const n = sh.getLastRow() - 1;
-    let rij = -1;
-    if (n > 0) {
-      const rows = sh.getRange(2, 1, n, 2).getValues();
-      for (let r = 0; r < rows.length; r++) {
-        if (dagKey_(rows[r][0], tz) === dag && String(rows[r][1]).toLowerCase() === naam.toLowerCase()) {
-          rij = r + 2;
-          break;
-        }
-      }
-    }
+    const rij = rijVanNaam_(sh, naam);
     if (!tekst) {
       if (rij > 0) sh.deleteRow(rij);
     } else if (rij > 0) {
-      sh.getRange(rij, 3, 1, 2).setValues([[tekst, new Date()]]);
+      sh.getRange(rij, 2, 1, 2).setValues([[tekst, new Date()]]);
     } else {
-      sh.appendRow([dag, naam, tekst, new Date()]);
+      sh.appendRow([naam, tekst, new Date()]);
     }
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
-  return getMijnOpmerkingen(naam);
+  return tekst;
 }

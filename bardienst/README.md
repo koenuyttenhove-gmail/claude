@@ -7,7 +7,7 @@ meerdere mensen zich opgeven. Je leden hebben geen account nodig: een link is ge
 Alles wordt opgeslagen in een Google Sheet. Daar kan je ook zelf de speeldagen
 aanpassen en alle inschrijvingen bekijken.
 
-![Voorbeeld](voorbeeld-desktop.png)
+![Voorbeeld](voorbeeld-computer.png)
 
 ## Installatie (±10 minuten, eenmalig)
 
@@ -34,7 +34,7 @@ Bij de eerste keer openen maakt het script twee tabbladen aan in je Sheet:
 |------------------|-----------------------------------------------------------------------|
 | `Speeldagen`     | Eén rij per voorstelling: datum en optionele info (bv. "Première").   |
 | `Inschrijvingen` | Wie zich voor welke dienst op welke dag heeft ingeschreven.           |
-| `Opmerkingen`    | De vrije opmerking (max. 200 tekens) per persoon per speelavond.      |
+| `Opmerkingen`    | De vrije opmerking (max. 200 tekens) van elke persoon.                |
 
 Het rooster wordt tot 5 minuten in de cache van Google bewaard, zodat de pagina
 snel laadt. Pas je zelf iets aan in het Sheet, dan wordt die cache automatisch
@@ -54,21 +54,23 @@ leeggemaakt.
 
 ## Hoe werkt het voor leden
 
-1. Ze openen de link en zien eerst een korte uitleg. Daar vullen ze hun naam in
-   (die wordt onthouden op hun toestel) en klikken op **Start met inchecken ✈**.
-2. Ze krijgen per speelavond een "boarding pass" met de rollen (gates) onthaal,
-   bar en kassa. Per rol kiezen ze **♥ Ik help graag** of **Ik kan eventueel ook**.
-   Kunnen ze niet, dan duiden ze niets aan. Nog eens klikken haalt een keuze weg.
-3. Onderaan elke boarding pass kunnen ze een opmerking voor die avond kwijt
-   (max. 200 tekens, bv. "pas vanaf 20u"). Die ziet alleen de persoon zelf op
-   de pagina; jij vindt alle opmerkingen in het tabblad `Opmerkingen`.
-4. Met **Volgende avond ✈** gaan ze verder; op het einde zien ze een overzicht
-   van hun keuzes, met per avond een knop **Wijzig**.
+Alles staat op één pagina, onder elkaar:
+
+1. Bovenaan een korte uitleg, daarna het veld **Jouw naam** (wordt onthouden op
+   hun toestel). Zolang er geen naam is, zijn de knoppen gedempt.
+2. Daarna alle speelavonden, elk met de rollen onthaal, bar en kassa. Per rol
+   kiezen ze **Ik help graag (voorkeur)** of **Ik kan eventueel ook**. Meerdere
+   avonden en rollen mag. Kunnen ze niet, dan duiden ze niets aan. Nog eens
+   klikken haalt een keuze weg.
+3. Onderaan één vrij **opmerkingenveld** (max. 200 tekens, optioneel). Het wordt
+   bewaard als ze het veld verlaten, of met de knop **Opmerking bewaren**.
 
 Keuzes worden meteen bewaard. Per rol zie je of er nog mensen nodig zijn en wie
-al ingecheckt is (♥ = helpt graag). In het tabblad `Inschrijvingen` staat de
-voorkeur in de kolom `Voorkeur` als `liefst` (helpt graag) of `kan` (eventueel).
-Voorbije speelavonden worden niet meer getoond.
+al is opgegeven (wie "voorkeur" koos, staat vooraan). In het tabblad
+`Inschrijvingen` staat de keuze in de kolom `Voorkeur` als `liefst` (voorkeur)
+of `kan` (eventueel). Iedereen ziet alleen zijn eigen opmerking op de pagina;
+jij vindt ze allemaal in het tabblad `Opmerkingen`. Voorbije speelavonden worden
+niet meer getoond.
 
 ## Uitproberen zonder installatie
 
