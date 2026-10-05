@@ -50,11 +50,14 @@ Bij de eerste keer openen maakt het script twee tabbladen aan in je Sheet:
 ## Hoe werkt het voor leden
 
 1. Ze openen de link en typen één keer hun naam (die wordt onthouden op hun toestel).
-2. Bij elke dienst waar ze kunnen, klikken ze op **Ik kan**.
-3. Zich vergist? Klik op het kruisje naast de naam en bevestig met **Ja**.
+2. Per speeldag en per rol (onthaal, bar, kassa) kiezen ze **♥ Ik help graag** of
+   **Ik kan eventueel ook**. Meerdere avonden en rollen aanduiden mag.
+3. Nog eens op de gekozen knop klikken haalt de keuze weg (of: kruisje naast de naam).
 
-Per dienst zie je meteen of er nog mensen nodig zijn (rood: "nog 2 nodig") of
-dat het ingevuld is (groen). De pagina ververst elke 30 seconden vanzelf.
+Per rol zie je meteen of er nog mensen nodig zijn (rood: "nog 2 nodig") of dat
+het ingevuld is (groen). Namen met ♥ helpen graag en staan vooraan. In het
+tabblad `Inschrijvingen` staat dat in de kolom `Voorkeur` als `liefst` (helpt
+graag) of `kan` (eventueel). De pagina ververst elke 30 seconden vanzelf.
 
 ## Uitproberen zonder installatie
 

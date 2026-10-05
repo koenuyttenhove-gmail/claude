@@ -148,12 +148,15 @@
   .dag-titel { margin: 0 0 12px; font-family: var(--serif); font-weight: 700; font-size: 21px; color: var(--groen-donker); }
   .dag-titel .info { font-family: var(--smal); font-weight: 400; font-size: 15px; color: var(--muted); margin-left: 8px; }
 
-  .functies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  /* Per speeldag één rij per rol: links rol en namen, rechts de twee keuzes. */
+  .functies { display: grid; }
   .functie {
-    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px 12px;
-    display: flex; flex-direction: column; gap: 10px; min-width: 0;
+    display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 10px 20px; align-items: center;
+    padding-block: 12px; border-top: 1px solid var(--line); min-width: 0;
   }
-  .functie-kop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .functie:first-child { border-top: 0; padding-top: 0; }
+  .functie-info { display: grid; gap: 8px; min-width: 0; }
+  .functie-kop { display: flex; align-items: center; gap: 10px; }
   .functie-naam { font-family: var(--smal); font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: .04em; }
   .pil {
     font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
@@ -162,7 +165,7 @@
   .pil.tekort { background: var(--tekort-soft); color: var(--tekort); }
   .pil.ok { background: var(--ok-soft); color: var(--ok); }
 
-  .namen { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; min-height: 30px; }
+  .namen { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
   .namen .leeg { color: var(--muted); font-size: 15px; align-self: center; }
   .chip {
     display: inline-flex; align-items: center; gap: 2px;
@@ -179,15 +182,17 @@
   .chip.bevestig { background: var(--tekort-soft); color: var(--tekort); padding-right: 4px; }
   .chip.bevestig button { width: auto; padding: 0 8px; font-size: 14px; font-weight: 700; opacity: 1; }
 
-  /* Twee keuzeknoppen per dienst: de gekozen voorkeur staat ingedrukt (gevuld). */
-  .keuze { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+  /* Twee keuzeknoppen per rol. Gekozen = gevuld met vinkje; nog eens klikken haalt de keuze weg.
+     "Graag" is de sterkste keuze (donkergroen), "eventueel" de zachtere (lichtgroen). */
+  .keuze { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .keuze button {
-    border: 1.5px solid var(--groen); background: var(--surface); color: var(--groen-donker);
-    border-radius: 6px; padding: 8px 6px; font-family: var(--smal); font-weight: 700; font-size: 16px;
+    min-height: 44px; border: 1.5px solid var(--groen); background: var(--surface); color: var(--groen-donker);
+    border-radius: 6px; padding: 6px 8px; font-family: var(--smal); font-weight: 700; font-size: 16px; line-height: 1.15;
     cursor: pointer;
   }
   .keuze button:hover { background: var(--ok-soft); }
-  .keuze button[aria-pressed="true"] { background: var(--groen); border-color: var(--groen); color: var(--accent-ink); cursor: default; }
+  .keuze button[data-voorkeur="liefst"][aria-pressed="true"] { background: var(--groen); border-color: var(--groen); color: var(--accent-ink); }
+  .keuze button[data-voorkeur="kan"][aria-pressed="true"] { background: var(--ok-soft); border-color: var(--groen); color: var(--groen-donker); }
   .keuze button:disabled { cursor: not-allowed; background: transparent; color: var(--muted); border-color: var(--line); }
   .chip .ster { margin-right: 3px; }
 
@@ -208,7 +213,7 @@
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   @media (max-width: 720px) {
-    .functies { grid-template-columns: 1fr; }
+    .functie { grid-template-columns: 1fr; }
     .dag { grid-template-columns: 64px 1fr; }
     .stub .nr { font-size: 30px; }
     .dag-body { padding: 12px; }
@@ -233,8 +238,8 @@
     <h1 class="dienst-titel" id="titel">Bardienst: onthaal, bar en kassa</h1>
     <ol class="stappen">
       <li><strong>Vul je naam in</strong>in de balk hieronder.</li>
-      <li><strong>Duid alles aan wat past</strong>Zoveel diensten als je wil. Kies <span class="ster">★</span> Liefst voor wat je het liefst doet, Kan ook voor de rest.</li>
-      <li><strong>Wij maken het rooster</strong>en laten je weten waar je ingedeeld bent.</li>
+      <li><strong>Duid alles aan wat past</strong>Zoveel avonden en rollen als je wil: kies <span class="ster">♥</span> Ik help graag of Ik kan eventueel ook.</li>
+      <li><strong>Wij maken het rooster</strong>en laten je finaal weten wie wanneer staat.</li>
     </ol>
     <div class="banner" id="demo" hidden>Voorbeeldweergave met verzonnen namen. Wat je hier aanklikt, wordt niet opgeslagen.</div>
    </div>
@@ -413,7 +418,7 @@
         var mijnInschr = ik ? lijst.filter(function (i) { return i.naam.toLowerCase() === ik; })[0] : null;
         if (mijnInschr && !voorbij) { if (mijnInschr.voorkeur === 'liefst') mijnLiefst++; else mijnKan++; }
 
-        html += '<section class="functie"><div class="functie-kop"><span class="functie-naam">' + esc(f.naam) + '</span>' +
+        html += '<section class="functie"><div class="functie-info"><div class="functie-kop"><span class="functie-naam">' + esc(f.naam) + '</span>' +
           (tekort ? '<span class="pil tekort">nog ' + tekort + ' nodig</span>'
                   : '<span class="pil ok">' + lijst.length + ' / ' + f.nodig + ' ok</span>') +
           '</div><ul class="namen">';
@@ -427,23 +432,23 @@
               '<button type="button" data-actie="annuleer">Nee</button></li>';
           } else {
             html += '<li class="chip' + (mijn ? ' mijn' : '') + '"><span>' +
-              (i.voorkeur === 'liefst' ? '<span class="ster" title="Liefst">★</span><span class="sr">liefst: </span>' : '') +
+              (i.voorkeur === 'liefst' ? '<span class="ster" title="Helpt graag">♥</span><span class="sr">helpt graag: </span>' : '') +
               esc(i.naam) + '</span>' +
               (voorbij ? '' : '<button type="button" data-actie="vraag" data-id="' + esc(i.id) + '" aria-label="' +
                 esc(i.naam) + ' weghalen bij ' + esc(f.naam) + '" title="Weghalen">×</button>') + '</li>';
           }
         });
-        html += '</ul>';
+        html += '</ul></div>';
 
         if (!voorbij) {
           var knop = function (voorkeur, label) {
             var aan = !!mijnInschr && mijnInschr.voorkeur === voorkeur;
             return '<button type="button" data-actie="kies" data-voorkeur="' + voorkeur + '" data-dag="' + esc(dag.key) +
               '" data-functie="' + esc(f.id) + '" aria-pressed="' + aan + '"' +
-              (ik ? '' : ' disabled title="Vul eerst je naam in"') + '>' + label + '</button>';
+              (ik ? '' : ' disabled title="Vul eerst je naam in"') + '>' + (aan ? '✓ ' : '') + label + '</button>';
           };
           html += '<div class="keuze" role="group" aria-label="Jouw keuze voor ' + esc(f.naam) + '">' +
-            knop('liefst', '★ Liefst') + knop('kan', 'Kan ook') + '</div>';
+            knop('liefst', '♥ Ik help graag') + knop('kan', 'Ik kan eventueel ook') + '</div>';
         }
         html += '</section>';
       });
@@ -456,7 +461,7 @@
       : '<strong>Alle diensten zijn ingevuld</strong>';
     if (ik) {
       $samen.innerHTML += mijnLiefst + mijnKan
-        ? ' · jij: <strong>' + mijnLiefst + '×</strong> liefst, <strong>' + mijnKan + '×</strong> kan ook'
+        ? ' · jij: <strong>' + mijnLiefst + '×</strong> graag, <strong>' + mijnKan + '×</strong> eventueel'
         : ' · jij staat nog nergens op';
     }
   }
@@ -484,13 +489,18 @@
     var naam = $naam.value.replace(/\s+/g, ' ').trim();
     var p;
     if (actie === 'kies') {
-      if (btn.getAttribute('aria-pressed') === 'true') return;
       if (!naam) { $naam.focus(); meld('Vul eerst je naam in bovenaan.', true); return; }
+      if (btn.getAttribute('aria-pressed') === 'true') {
+        var mijnId = mijnInschrijving(btn.getAttribute('data-dag'), btn.getAttribute('data-functie'));
+        if (!mijnId) return;
+        p = roep('removeSignup', mijnId).then(function (d) { meld('Je keuze is weggehaald.'); return d; });
+        return bewaar(btn, p);
+      }
       var voorkeur = btn.getAttribute('data-voorkeur');
       var wasAl = btn.parentNode.querySelector('[aria-pressed="true"]');
       p = roep('addSignup', btn.getAttribute('data-dag'), btn.getAttribute('data-functie'), naam, voorkeur)
         .then(function (d) {
-          meld(wasAl ? 'Aangepast naar ' + (voorkeur === 'liefst' ? '“liefst”.' : '“kan ook”.') : 'Genoteerd, bedankt!');
+          meld(wasAl ? 'Aangepast naar ' + (voorkeur === 'liefst' ? '“ik help graag”.' : '“ik kan eventueel ook”.') : 'Genoteerd, bedankt!');
           return d;
         });
     } else if (actie === 'weg') {
@@ -499,7 +509,18 @@
     } else {
       return;
     }
+    bewaar(btn, p);
+  });
 
+  function mijnInschrijving(dag, functie) {
+    var ik = mijnNaam();
+    var i = state.data.inschrijvingen.filter(function (i) {
+      return i.dag === dag && i.functie === functie && i.naam.toLowerCase() === ik;
+    })[0];
+    return i ? i.id : null;
+  }
+
+  function bewaar(btn, p) {
     state.bezig = true;
     btn.disabled = true;
     btn.textContent = 'Even geduld…';
@@ -512,7 +533,7 @@
       state.bevestigId = null;
       render();
     });
-  });
+  }
 
   laad(false);
   // Houd het rooster actueel terwijl de pagina open staat.
