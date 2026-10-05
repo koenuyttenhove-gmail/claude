@@ -49,15 +49,18 @@ Bij de eerste keer openen maakt het script twee tabbladen aan in je Sheet:
 
 ## Hoe werkt het voor leden
 
-1. Ze openen de link en typen één keer hun naam (die wordt onthouden op hun toestel).
-2. Per speeldag en per rol (onthaal, bar, kassa) kiezen ze **♥ Ik help graag** of
-   **Ik kan eventueel ook**. Meerdere avonden en rollen aanduiden mag.
-3. Nog eens op de gekozen knop klikken haalt de keuze weg (of: kruisje naast de naam).
+1. Ze openen de link en zien eerst een korte uitleg. Daar vullen ze hun naam in
+   (die wordt onthouden op hun toestel) en klikken op **Start met inchecken ✈**.
+2. Ze krijgen per speelavond een "boarding pass" met de rollen (gates) onthaal,
+   bar en kassa. Per rol kiezen ze **♥ Ik help graag** of **Ik kan eventueel ook**.
+   Kunnen ze niet, dan duiden ze niets aan. Nog eens klikken haalt een keuze weg.
+3. Met **Volgende avond ✈** gaan ze verder; op het einde zien ze een overzicht
+   van hun keuzes, met per avond een knop **Wijzig**.
 
-Per rol zie je meteen of er nog mensen nodig zijn (rood: "nog 2 nodig") of dat
-het ingevuld is (groen). Namen met ♥ helpen graag en staan vooraan. In het
-tabblad `Inschrijvingen` staat dat in de kolom `Voorkeur` als `liefst` (helpt
-graag) of `kan` (eventueel). De pagina ververst elke 30 seconden vanzelf.
+Keuzes worden meteen bewaard. Per rol zie je of er nog mensen nodig zijn en wie
+al ingecheckt is (♥ = helpt graag). In het tabblad `Inschrijvingen` staat de
+voorkeur in de kolom `Voorkeur` als `liefst` (helpt graag) of `kan` (eventueel).
+Voorbije speelavonden worden niet meer getoond.
 
 ## Uitproberen zonder installatie
 

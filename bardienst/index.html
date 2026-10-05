@@ -9,7 +9,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto+Condensed:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
   /* Huisstijl van de affiche "Tot de dood ons scheidt" (Ieperse Kunstkring Richten):
-     hemelsblauw, donkergroen, wit lint. Bewust één licht thema, net als de affiche. */
+     hemelsblauw, donkergroen, wit lint, en de boardingpass van de affiche.
+     Bewust één licht thema, net als de affiche. */
   :root {
     --lucht: #B9D5EC;
     --lucht-licht: #D6E7F5;
@@ -19,13 +20,11 @@
     --groen-donker: #2C5215;
     --muted: #5B6B55;
     --line: #D3DECB;
-    --accent: #3C6A1E;
-    --accent-ink: #FFFFFF;
+    --navy: #1F3B66;
     --tekort: #A8432A;
     --tekort-soft: #FBE9E2;
     --ok: #2F6B1B;
     --ok-soft: #E4F0DA;
-    --chip: #EEF3EA;
     --mine: #FFF3CC;
     --mine-ink: #5E4500;
     --focus: #1F5FA8;
@@ -45,216 +44,196 @@
     min-height: 100vh;
   }
   button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   a { color: var(--groen-donker); }
+  [hidden] { display: none !important; }
 
-  .wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; }
+  .wrap { max-width: 680px; margin: 0 auto; padding-inline: 16px; }
 
-  header.kop { padding-block: 28px 20px; display: grid; gap: 24px; align-items: start; }
-  header.kop.met-affiche { grid-template-columns: minmax(0, 1fr) 220px; }
-  .affiche[hidden] { display: none; }
-  .kop-tekst { display: grid; gap: 14px; min-width: 0; }
+  /* ---------- Kop (zoals de affiche) ---------- */
+  header.kop { padding-block: 24px 8px; display: grid; gap: 20px; align-items: start; }
+  header.kop.met-affiche { grid-template-columns: minmax(0, 1fr) 150px; }
+  .kop-tekst { display: grid; gap: 10px; min-width: 0; }
   .affiche {
     width: 100%; max-width: 100%; height: auto; display: block;
     border-radius: 4px; box-shadow: 0 10px 28px rgba(30, 53, 20, .18);
     transform: rotate(1.5deg);
   }
-  .stelt-voor {
-    font-family: var(--smal); font-weight: 600; color: var(--groen);
-    font-size: clamp(18px, 3.4vw, 24px); margin: 0;
-  }
+  .stelt-voor { font-family: var(--smal); font-weight: 600; color: var(--groen); font-size: clamp(17px, 3.4vw, 21px); margin: 0; }
   .lint {
-    justify-self: start; margin: 6px 0 4px;
+    justify-self: start; margin: 4px 0 2px;
     background: var(--surface); color: var(--groen-donker);
     font-family: var(--serif); font-weight: 700;
-    font-size: clamp(28px, 6.4vw, 48px); line-height: 1.1;
-    padding: 10px 28px 12px 22px; text-wrap: balance;
+    font-size: clamp(27px, 6.4vw, 40px); line-height: 1.1;
+    padding: 9px 28px 11px 20px; text-wrap: balance;
     transform: rotate(-2.5deg);
     clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 50%, 100% 100%, 0 100%);
     box-shadow: 0 8px 20px rgba(30, 53, 20, .12);
     max-width: 100%;
   }
-  .praktisch {
-    font-family: var(--smal); color: var(--groen-donker); margin: 0;
-    font-size: clamp(16px, 2.6vw, 20px); font-weight: 700;
-  }
+  .praktisch { font-family: var(--smal); color: var(--groen-donker); margin: 0; font-size: clamp(15px, 2.6vw, 18px); font-weight: 700; }
   .praktisch span { font-weight: 400; }
-  .dienst-titel {
-    margin: 10px 0 0; font-family: var(--smal); font-weight: 700; color: var(--ink);
-    font-size: clamp(24px, 4.4vw, 32px); letter-spacing: .01em;
-  }
-  .stappen {
-    list-style: none; margin: 4px 0 0; padding: 0; counter-reset: stap;
-    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
-  }
-  .stappen li {
-    counter-increment: stap; position: relative;
-    background: color-mix(in srgb, var(--surface) 70%, transparent);
-    border-radius: 8px; padding: 10px 12px 10px 48px; font-size: 16px; line-height: 1.35;
-  }
-  .stappen li::before {
-    content: counter(stap); position: absolute; left: 12px; top: 10px;
-    width: 26px; height: 26px; border-radius: 50%;
-    background: var(--groen-donker); color: #FFFFFF;
-    font: 700 15px/26px var(--smal); text-align: center;
-  }
-  .stappen strong { display: block; font-family: var(--smal); font-size: 17px; color: var(--groen-donker); }
-  .ster { color: var(--groen); }
 
-  .naambalk {
-    position: sticky; top: 0; z-index: 5;
-    background: color-mix(in srgb, var(--lucht-licht) 92%, transparent);
-    backdrop-filter: blur(6px);
-    border-block: 1px solid color-mix(in srgb, var(--groen) 20%, transparent);
-    padding-block: 12px;
+  main { padding-block: 12px 28px; display: grid; gap: 14px; }
+  h1 { font-family: var(--smal); font-weight: 700; font-size: clamp(24px, 5vw, 30px); margin: 4px 0 0; line-height: 1.15; }
+
+  .banner { padding: 10px 14px; border-radius: 6px; background: var(--mine); color: var(--mine-ink); font-size: 15px; }
+  .kaart { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 12px rgba(30, 53, 20, .08); }
+
+  /* ---------- Welkom / uitleg ---------- */
+  .uitleg { padding: 16px 16px 6px; }
+  .uitleg h2 { margin: 0 0 10px; font: 700 20px var(--smal); color: var(--navy); display: flex; align-items: center; gap: 8px; }
+  .stappen { list-style: none; margin: 0; padding: 0; counter-reset: stap; display: grid; gap: 12px; }
+  .stappen li { counter-increment: stap; position: relative; padding-left: 40px; line-height: 1.4; }
+  .stappen li::before {
+    content: counter(stap); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--navy); color: #FFFFFF; font: 700 15px/28px var(--smal); text-align: center;
   }
-  .naambalk .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-  .naambalk label { font-family: var(--smal); font-weight: 700; color: var(--groen-donker); }
+  .stappen strong { color: var(--groen-donker); }
+  .voorbeeld { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .voorbeeld span {
+    border: 1.5px solid var(--groen); border-radius: 6px; padding: 2px 8px;
+    font: 700 14px var(--smal); color: var(--groen-donker); background: var(--surface);
+  }
+  .voorbeeld span.vol { background: var(--groen); color: #FFFFFF; }
+  .naamvak { padding: 16px; display: grid; gap: 10px; }
+  .naamvak label { font: 700 16px var(--smal); color: var(--navy); letter-spacing: .06em; text-transform: uppercase; }
   #naam {
-    flex: 1 1 220px; max-width: 360px; min-width: 0;
-    padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 6px;
-    background: var(--surface);
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 8px;
+    background: var(--surface); font-size: 18px;
   }
   #naam:focus { border-color: var(--groen); outline: none; }
-  .samenvatting { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
-  .samenvatting strong { color: var(--ink); }
+  .hint { color: var(--muted); font-size: 15px; margin: 0; }
 
-  .banner {
-    padding: 10px 14px; border-radius: 6px;
-    background: var(--mine); color: var(--mine-ink); font-size: 15px;
+  .hoofdknop {
+    width: 100%; border: 0; border-radius: 10px; padding: 14px 16px;
+    background: var(--groen-donker); color: #FFFFFF; font: 700 19px var(--smal);
+  }
+  .hoofdknop:hover { background: var(--groen); }
+  .hoofdknop:disabled { background: #B9C4B3; cursor: not-allowed; }
+
+  /* ---------- Voortgang ---------- */
+  .voortgang { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 700 15px var(--smal); color: var(--navy); }
+  .voortgang .links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dots { display: flex; gap: 6px; }
+  .dots button { width: 30px; height: 8px; border: 0; padding: 0; border-radius: 4px; background: var(--surface); }
+  .dots button.gedaan { background: var(--groen); }
+  .dots button.nu { background: var(--navy); }
+  .hulpknop {
+    border: 1.5px solid var(--navy); background: var(--surface); color: var(--navy);
+    border-radius: 999px; padding: 4px 12px; font: 700 14px var(--smal); white-space: nowrap;
   }
 
-  main { padding-block: 20px 32px; display: grid; gap: 16px; }
+  /* ---------- Boarding pass ---------- */
+  .bp { overflow: hidden; font-family: var(--smal); }
+  .bp-top { background: var(--navy); color: #FFFFFF; display: flex; justify-content: space-between; padding: 8px 16px; font-size: 14px; letter-spacing: .14em; font-weight: 700; }
+  .bp-rij { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding: 12px 16px 0; }
+  .bp-rij small { display: block; font-size: 11px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .bp-rij .code { display: block; font-size: 34px; line-height: 1; color: var(--navy); font-weight: 700; }
+  .bp-rij .plek { font-size: 13px; color: var(--muted); }
+  .bp-rij .r { text-align: right; }
+  .vliegtuig { color: var(--navy); font-size: 24px; padding-bottom: 18px; }
+  .bp-meta { padding-bottom: 14px; }
+  .bp-meta b { display: block; font-size: 17px; color: var(--ink); }
+  .bp-datum { padding: 2px 16px 12px; }
+  .bp-datum .dag { font: 700 13px var(--smal); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .bp-datum h2 { margin: 0; font: 700 clamp(28px, 7vw, 36px)/1.1 var(--serif); color: var(--groen-donker); }
+  .bp-datum h2 .info { font: 400 15px var(--smal); color: var(--muted); margin-left: 6px; }
+  .scheur { border-top: 2px dashed var(--line); position: relative; margin: 0 0 4px; }
+  .scheur::before, .scheur::after {
+    content: ""; position: absolute; top: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--lucht-licht);
+  }
+  .scheur::before { left: -10px; } .scheur::after { right: -10px; }
+  .vraag { padding: 10px 16px 0; margin: 0; font: 400 16px var(--body); color: var(--muted); }
 
-  /* Elke speeldag als een ticket: strook links met de datum, perforatie, dan de diensten. */
-  .dag {
-    display: grid; grid-template-columns: 88px 1fr;
-    background: var(--surface); border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(30, 53, 20, .08);
-    overflow: hidden;
-  }
-  .dag.voorbij { opacity: .55; }
-  .stub {
-    padding: 16px 8px; text-align: center;
-    background: var(--groen-donker); color: #FFFFFF;
-    border-right: 3px dotted var(--lucht-licht);
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: var(--smal); font-variant-numeric: tabular-nums;
-  }
-  .stub .wd { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; opacity: .85; }
-  .stub .nr { font-weight: 700; font-size: 40px; line-height: 1; }
-  .stub .mnd { font-size: 14px; opacity: .85; }
-  .dag-body { padding: 14px 16px 16px; min-width: 0; }
-  .dag-titel { margin: 0 0 12px; font-family: var(--serif); font-weight: 700; font-size: 21px; color: var(--groen-donker); }
-  .dag-titel .info { font-family: var(--smal); font-weight: 400; font-size: 15px; color: var(--muted); margin-left: 8px; }
-
-  /* Per speeldag één rij per rol: links rol en namen, rechts de twee keuzes. */
-  .functies { display: grid; }
-  .functie {
-    display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 10px 20px; align-items: center;
-    padding-block: 12px; border-top: 1px solid var(--line); min-width: 0;
-  }
-  .functie:first-child { border-top: 0; padding-top: 0; }
-  .functie-info { display: grid; gap: 8px; min-width: 0; }
-  .functie-kop { display: flex; align-items: center; gap: 10px; }
-  .functie-naam { font-family: var(--smal); font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: .04em; }
-  .pil {
-    font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-    white-space: nowrap; font-variant-numeric: tabular-nums;
-  }
+  .gate { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .gate:first-of-type { border-top: 0; }
+  .gate-kop { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .gate-kop small { display: block; font-size: 11px; letter-spacing: .16em; color: var(--muted); }
+  .gate-kop b { font-size: 22px; letter-spacing: .04em; text-transform: uppercase; line-height: 1; }
+  .pil { font: 700 13px var(--body); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .pil.tekort { background: var(--tekort-soft); color: var(--tekort); }
   .pil.ok { background: var(--ok-soft); color: var(--ok); }
 
-  .namen { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
-  .namen .leeg { color: var(--muted); font-size: 15px; align-self: center; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 2px;
-    background: var(--chip); border-radius: 999px; padding: 3px 4px 3px 10px;
-    font-size: 15px; max-width: 100%;
-  }
-  .chip span { overflow-wrap: anywhere; }
-  .chip.mijn { background: var(--mine); color: var(--mine-ink); font-weight: 700; }
-  .chip button {
-    border: 0; background: transparent; cursor: pointer; border-radius: 999px;
-    width: 24px; height: 24px; line-height: 1; font-size: 16px; color: inherit; opacity: .6;
-  }
-  .chip button:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
-  .chip.bevestig { background: var(--tekort-soft); color: var(--tekort); padding-right: 4px; }
-  .chip.bevestig button { width: auto; padding: 0 8px; font-size: 14px; font-weight: 700; opacity: 1; }
-
-  /* Twee keuzeknoppen per rol. Gekozen = gevuld met vinkje; nog eens klikken haalt de keuze weg.
-     "Graag" is de sterkste keuze (donkergroen), "eventueel" de zachtere (lichtgroen). */
   .keuze { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .keuze button {
-    min-height: 44px; border: 1.5px solid var(--groen); background: var(--surface); color: var(--groen-donker);
-    border-radius: 6px; padding: 6px 8px; font-family: var(--smal); font-weight: 700; font-size: 16px; line-height: 1.15;
-    cursor: pointer;
+    min-height: 52px; border: 1.5px solid var(--groen); background: var(--surface); color: var(--groen-donker);
+    border-radius: 8px; padding: 6px 8px; font: 700 17px/1.15 var(--smal);
   }
   .keuze button:hover { background: var(--ok-soft); }
-  .keuze button[data-voorkeur="liefst"][aria-pressed="true"] { background: var(--groen); border-color: var(--groen); color: var(--accent-ink); }
-  .keuze button[data-voorkeur="kan"][aria-pressed="true"] { background: var(--ok-soft); border-color: var(--groen); color: var(--groen-donker); }
-  .keuze button:disabled { cursor: not-allowed; background: transparent; color: var(--muted); border-color: var(--line); }
-  .chip .ster { margin-right: 3px; }
+  .keuze button[data-voorkeur="liefst"][aria-pressed="true"] { background: var(--groen); border-color: var(--groen); color: #FFFFFF; }
+  .keuze button[data-voorkeur="kan"][aria-pressed="true"] { background: var(--ok-soft); border-color: var(--groen); color: var(--groen-donker); box-shadow: inset 0 0 0 1px var(--groen); }
+  .keuze button:disabled { cursor: wait; opacity: .7; }
+  .wie { font: 400 14px var(--body); color: var(--muted); margin: 0; }
+  .wie .ster { color: var(--groen); }
+  .wie .ik { color: var(--mine-ink); background: var(--mine); border-radius: 4px; padding: 0 4px; font-weight: 700; }
 
-  footer.voet {
-    padding-block: 8px 40px; color: var(--muted); font-family: var(--smal); font-size: 15px;
-    display: flex; flex-wrap: wrap; gap: 4px 20px;
+  .barcode {
+    height: 30px; margin: 4px 16px 16px; opacity: .7;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 13px);
   }
+
+  .nav { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+  .nav button { border-radius: 10px; padding: 14px 10px; font: 700 18px var(--smal); }
+  .nav .terug { background: var(--surface); color: var(--groen-donker); border: 1.5px solid var(--line); }
+  .nav .verder { background: var(--groen-donker); color: #FFFFFF; border: 0; }
+  .nav .verder:hover { background: var(--groen); }
+  .geenkeuze { text-align: center; color: var(--muted); font-size: 15px; margin: 0; }
+
+  /* ---------- Overzicht ---------- */
+  .overzicht .bp-datum { padding-top: 14px; }
+  .ov-rij { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .ov-dag { background: var(--groen-donker); color: #FFFFFF; border-radius: 8px; text-align: center; padding: 4px 0; font-family: var(--smal); }
+  .ov-dag span { display: block; font-size: 11px; letter-spacing: .1em; opacity: .85; }
+  .ov-dag b { display: block; font-size: 24px; line-height: 1.05; }
+  .ov-keuzes { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .ov-keuzes .k { border-radius: 999px; padding: 3px 10px; font: 700 14px var(--smal); }
+  .ov-keuzes .k.liefst { background: var(--groen); color: #FFFFFF; }
+  .ov-keuzes .k.kan { background: var(--ok-soft); color: var(--groen-donker); }
+  .ov-keuzes .niets { color: var(--muted); font-size: 15px; }
+  .wijzig { border: 1.5px solid var(--navy); background: var(--surface); color: var(--navy); border-radius: 8px; padding: 6px 12px; font: 700 15px var(--smal); }
+  .bewaard { padding: 14px 16px 16px; border-top: 2px dashed var(--line); color: var(--groen-donker); }
+  .bewaard b { font-family: var(--smal); font-size: 18px; display: block; }
+
+  footer.voet { padding-block: 4px 40px; color: var(--muted); font-family: var(--smal); font-size: 15px; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 
   .melding {
     position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%); max-width: calc(100% - 32px);
-    background: var(--groen-donker); color: #FFFFFF; padding: 10px 16px; border-radius: 6px;
-    font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.2);
+    background: var(--groen-donker); color: #FFFFFF; padding: 10px 16px; border-radius: 8px;
+    font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.2); z-index: 20;
   }
   .melding.fout { background: var(--tekort); }
-
   .laden { color: var(--muted); padding: 24px 0; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-  @media (max-width: 720px) {
-    .functie { grid-template-columns: 1fr; }
-    .dag { grid-template-columns: 64px 1fr; }
-    .stub .nr { font-size: 30px; }
-    .dag-body { padding: 12px; }
-    .lint { padding-inline: 16px 24px; }
-    .stappen { grid-template-columns: 1fr; }
+  @media (max-width: 560px) {
     header.kop.met-affiche { display: block; position: relative; }
-    .met-affiche .affiche { position: absolute; top: 24px; right: 16px; width: 84px; transform: rotate(2deg); }
-    .met-affiche .stelt-voor { margin-right: 96px; }
-    .met-affiche .lint { max-width: calc(100% - 96px); }
+    .met-affiche .affiche { position: absolute; top: 20px; right: 16px; width: 80px; transform: rotate(2deg); }
+    .met-affiche .stelt-voor { margin-right: 92px; }
+    .met-affiche .lint { max-width: calc(100% - 92px); }
+    .lint { padding-inline: 16px 24px; }
+    .bp-rij .code { font-size: 28px; }
+    .bp-meta b { font-size: 15px; }
   }
   @media (prefers-reduced-motion: no-preference) {
-    .chip, .keuze button { transition: background-color .15s, color .15s, opacity .15s; }
+    .keuze button, .dots button { transition: background-color .15s, color .15s; }
   }
 </style>
 </head>
 <body>
   <header class="kop wrap">
-   <div class="kop-tekst">
-    <p class="stelt-voor">Ieperse Kunstkring Richten stelt voor</p>
-    <p class="lint">Tot de dood ons scheidt</p>
-    <p class="praktisch">Za 7 – vr 13 – za 14 – di 17 november 2026 <span>· Schouwburg Ieper</span></p>
-    <h1 class="dienst-titel" id="titel">Bardienst: onthaal, bar en kassa</h1>
-    <ol class="stappen">
-      <li><strong>Vul je naam in</strong>in de balk hieronder.</li>
-      <li><strong>Duid alles aan wat past</strong>Zoveel avonden en rollen als je wil: kies <span class="ster">♥</span> Ik help graag of Ik kan eventueel ook.</li>
-      <li><strong>Wij maken het rooster</strong>en laten je finaal weten wie wanneer staat.</li>
-    </ol>
-    <div class="banner" id="demo" hidden>Voorbeeldweergave met verzonnen namen. Wat je hier aanklikt, wordt niet opgeslagen.</div>
-   </div>
+    <div class="kop-tekst">
+      <p class="stelt-voor">Ieperse Kunstkring Richten stelt voor</p>
+      <p class="lint">Tot de dood ons scheidt</p>
+      <p class="praktisch">Za 7 – vr 13 – za 14 – di 17 november 2026 <span>· Schouwburg Ieper</span></p>
+    </div>
     <img class="affiche" id="affiche" alt="Affiche van Tot de dood ons scheidt: een witte bloemenkrans met lint en een boardingpass" hidden>
   </header>
 
-  <div class="naambalk">
-    <div class="wrap">
-      <label for="naam">Jouw naam</label>
-      <input id="naam" type="text" maxlength="40" autocomplete="name" placeholder="Voornaam en eerste letter familienaam">
-      <span class="samenvatting" id="samenvatting"></span>
-    </div>
-  </div>
-
-  <main class="wrap" id="dagen">
+  <main class="wrap" id="app">
     <p class="laden">Rooster laden…</p>
   </main>
 
@@ -288,18 +267,16 @@
       ],
       inschrijvingen: [
         { id: 'd1', dag: '2026-11-07', functie: 'onthaal', naam: 'Els V.', voorkeur: 'liefst' },
-        { id: 'd2', dag: '2026-11-07', functie: 'bar', naam: 'Tom D.', voorkeur: 'liefst' },
         { id: 'd3', dag: '2026-11-07', functie: 'bar', naam: 'Sarah M.', voorkeur: 'kan' },
         { id: 'd4', dag: '2026-11-07', functie: 'bar', naam: 'Pieter C.', voorkeur: 'liefst' },
         { id: 'd5', dag: '2026-11-07', functie: 'bar', naam: 'Lien B.', voorkeur: 'kan' },
         { id: 'd6', dag: '2026-11-07', functie: 'kassa', naam: 'Marc H.', voorkeur: 'liefst' },
         { id: 'd7', dag: '2026-11-13', functie: 'onthaal', naam: 'Els V.', voorkeur: 'kan' },
         { id: 'd8', dag: '2026-11-13', functie: 'onthaal', naam: 'Ann W.', voorkeur: 'liefst' },
-        { id: 'd9', dag: '2026-11-13', functie: 'bar', naam: 'Tom D.', voorkeur: 'kan' },
         { id: 'd10', dag: '2026-11-14', functie: 'kassa', naam: 'Marc H.', voorkeur: 'kan' },
         { id: 'd11', dag: '2026-11-14', functie: 'kassa', naam: 'Ann W.', voorkeur: 'liefst' }
       ],
-      vandaag: '2026-09-25'
+      vandaag: '2026-10-05'
     },
     teller: 100,
     getData: function () { return this.data; },
@@ -331,19 +308,12 @@
     });
   }
 
-  var state = { data: null, bezig: false, bevestigId: null };
-  var $dagen = document.getElementById('dagen');
-  var $naam = document.getElementById('naam');
-  var $samen = document.getElementById('samenvatting');
+  // stap 0 = uitleg, 1..n = speelavonden, n+1 = overzicht
+  var state = { data: null, bezig: false, stap: 0, naam: '' };
+  var $app = document.getElementById('app');
   var $melding = document.getElementById('melding');
 
-  try { $naam.value = localStorage.getItem('bardienst-naam') || ''; } catch (e) {}
-  $naam.addEventListener('input', function () {
-    try { localStorage.setItem('bardienst-naam', $naam.value.trim()); } catch (e) {}
-    render();
-  });
-
-  if (!ECHT) document.getElementById('demo').hidden = false;
+  try { state.naam = localStorage.getItem('bardienst-naam') || ''; } catch (e) {}
 
   var meldTimer;
   function meld(tekst, fout) {
@@ -351,7 +321,7 @@
     $melding.className = 'melding' + (fout ? ' fout' : '');
     $melding.hidden = false;
     clearTimeout(meldTimer);
-    meldTimer = setTimeout(function () { $melding.hidden = true; }, fout ? 5000 : 2500);
+    meldTimer = setTimeout(function () { $melding.hidden = true; }, fout ? 5000 : 2200);
   }
 
   function esc(s) {
@@ -360,15 +330,17 @@
     });
   }
 
-  function mijnNaam() { return $naam.value.replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function schoon(naam) { return String(naam || '').replace(/\s+/g, ' ').trim(); }
+  function ik() { return schoon(state.naam).toLowerCase(); }
 
   function datum(key) {
     var d = new Date(key + 'T12:00:00');
     return {
-      wd: d.toLocaleDateString('nl-BE', { weekday: 'short' }).replace('.', ''),
+      wd: d.toLocaleDateString('nl-BE', { weekday: 'long' }),
+      kort: d.toLocaleDateString('nl-BE', { weekday: 'short' }).replace('.', '').toUpperCase(),
       nr: d.getDate(),
-      mnd: d.toLocaleDateString('nl-BE', { month: 'short' }).replace('.', ''),
-      lang: d.toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' })
+      mnd: d.toLocaleDateString('nl-BE', { month: 'long' }),
+      mndKort: d.toLocaleDateString('nl-BE', { month: 'short' }).replace('.', '').toUpperCase()
     };
   }
 
@@ -382,147 +354,226 @@
     img.src = url;
   }
 
-  function render() {
-    var data = state.data;
-    if (!data) return;
-    document.title = data.titel;
-    toonAffiche(data.affiche);
+  // Alleen speelavonden die nog moeten komen.
+  function avonden() {
+    var d = state.data;
+    return d.dagen.filter(function (dag) { return dag.key >= d.vandaag; });
+  }
 
-    var ik = mijnNaam();
-    var open = 0, mijnLiefst = 0, mijnKan = 0;
-    var html = '';
+  function lijstVoor(dagKey, functieId) {
+    var l = state.data.inschrijvingen.filter(function (i) { return i.dag === dagKey && i.functie === functieId; });
+    return l.filter(function (i) { return i.voorkeur === 'liefst'; })
+      .concat(l.filter(function (i) { return i.voorkeur !== 'liefst'; }));
+  }
 
-    if (!data.dagen.length) {
-      $dagen.innerHTML = '<p class="laden">Er staan nog geen speeldagen in het rooster.</p>';
-      $samen.textContent = '';
-      return;
-    }
+  function mijnKeuze(dagKey, functieId) {
+    var naam = ik();
+    if (!naam) return null;
+    return state.data.inschrijvingen.filter(function (i) {
+      return i.dag === dagKey && i.functie === functieId && i.naam.toLowerCase() === naam;
+    })[0] || null;
+  }
 
-    data.dagen.forEach(function (dag) {
-      var dt = datum(dag.key);
-      var voorbij = dag.key < data.vandaag;
-      html += '<article class="dag' + (voorbij ? ' voorbij' : '') + '">' +
-        '<div class="stub" aria-hidden="true"><span class="wd">' + esc(dt.wd) + '</span><span class="nr">' + dt.nr +
-        '</span><span class="mnd">' + esc(dt.mnd) + '</span></div>' +
-        '<div class="dag-body"><h2 class="dag-titel">' + esc(dt.lang.charAt(0).toUpperCase() + dt.lang.slice(1)) +
-        (dag.info ? '<span class="info">' + esc(dag.info) + '</span>' : '') +
-        (voorbij ? '<span class="info">voorbij</span>' : '') + '</h2><div class="functies">';
+  function aantalMijnKeuzes() {
+    var naam = ik(), keys = avonden().map(function (d) { return d.key; });
+    return state.data.inschrijvingen.filter(function (i) {
+      return i.naam.toLowerCase() === naam && keys.indexOf(i.dag) >= 0;
+    }).length;
+  }
 
-      data.functies.forEach(function (f) {
-        // Wie "liefst" koos, eerst; daarbinnen in volgorde van inschrijving.
-        var lijst = data.inschrijvingen.filter(function (i) { return i.dag === dag.key && i.functie === f.id; });
-        lijst = lijst.filter(function (i) { return i.voorkeur === 'liefst'; })
-          .concat(lijst.filter(function (i) { return i.voorkeur !== 'liefst'; }));
-        var tekort = Math.max(0, f.nodig - lijst.length);
-        if (!voorbij) open += tekort;
-        var mijnInschr = ik ? lijst.filter(function (i) { return i.naam.toLowerCase() === ik; })[0] : null;
-        if (mijnInschr && !voorbij) { if (mijnInschr.voorkeur === 'liefst') mijnLiefst++; else mijnKan++; }
+  // ---------- Schermen ----------
 
-        html += '<section class="functie"><div class="functie-info"><div class="functie-kop"><span class="functie-naam">' + esc(f.naam) + '</span>' +
+  function schermUitleg() {
+    var n = state.naam ? aantalMijnKeuzes() : 0;
+    var aantal = avonden().length;
+    return '' +
+      (ECHT ? '' : '<div class="banner">Voorbeeldweergave met verzonnen namen. Wat je hier aanklikt, wordt niet opgeslagen.</div>') +
+      '<h1>Bardienst: check in voor onthaal, bar of kassa</h1>' +
+      '<section class="kaart uitleg" aria-labelledby="zo"><h2 id="zo">✈ Zo werkt het</h2><ol class="stappen">' +
+        '<li><strong>Vul hieronder je naam in</strong> en klik op <em>Start met inchecken</em>.</li>' +
+        '<li>Je krijgt <strong>per speelavond een boarding pass</strong> (' + aantal + ' in totaal). Daarop staan de rollen: onthaal, bar en kassa.' +
+          '<div class="voorbeeld" aria-hidden="true"><span class="vol">♥ Ik help graag</span><span>Ik kan eventueel ook</span></div></li>' +
+        '<li>Duid per rol aan of je <strong>graag</strong> helpt of <strong>eventueel</strong> kan. Meerdere rollen en avonden mag. <strong>Kan je niet? Duid dan gewoon niets aan.</strong></li>' +
+        '<li>Je keuzes worden <strong>meteen bewaard</strong>. Achteraf wijzigen kan altijd via dezelfde link.</li>' +
+        '<li>Wij maken daarna het rooster en <strong>laten je finaal weten</strong> wie wanneer staat.</li>' +
+      '</ol></section>' +
+      '<section class="kaart naamvak"><label for="naam">Jouw naam (passagier)</label>' +
+        '<input id="naam" type="text" maxlength="40" autocomplete="name" placeholder="Voornaam + familienaam" value="' + esc(state.naam) + '">' +
+        (n ? '<p class="hint">Je hebt al ' + n + ' ' + (n === 1 ? 'keuze' : 'keuzes') + ' doorgegeven. Klik verder om ze te bekijken of te wijzigen.</p>'
+           : '<p class="hint">Gebruik telkens dezelfde naam, dan vinden we je keuzes terug.</p>') +
+        '<button type="button" class="hoofdknop" data-actie="start"' + (schoon(state.naam) ? '' : ' disabled') + '>' +
+          (n ? 'Bekijk mijn boarding passes ✈' : 'Start met inchecken ✈') + '</button>' +
+      '</section>';
+  }
+
+  function voortgang(huidig) {
+    var lijst = avonden();
+    var dots = lijst.map(function (d, i) {
+      var cls = i + 1 === huidig ? 'nu' : (i + 1 < huidig ? 'gedaan' : '');
+      return '<button type="button" class="' + cls + '" data-actie="naar" data-stap="' + (i + 1) + '" aria-label="Naar avond ' + (i + 1) + '"></button>';
+    }).join('');
+    var tekst = huidig <= lijst.length ? 'Avond ' + huidig + ' van ' + lijst.length : 'Overzicht';
+    return '<div class="voortgang"><div class="links"><span>' + tekst + '</span><div class="dots">' + dots + '</div></div>' +
+      '<button type="button" class="hulpknop" data-actie="hulp">? Uitleg</button></div>';
+  }
+
+  function schermAvond(i) {
+    var lijst = avonden();
+    var dag = lijst[i - 1];
+    var dt = datum(dag.key);
+    var naam = schoon(state.naam);
+    var html = voortgang(i) +
+      '<article class="kaart bp">' +
+        '<div class="bp-top"><span>✈ BOARDING PASS</span><span>' + i + '/' + lijst.length + '</span></div>' +
+        '<div class="bp-rij"><div><small>Van</small><span class="code">RIC</span><span class="plek">Kunstkring Richten</span></div>' +
+          '<div class="vliegtuig" aria-hidden="true">✈</div>' +
+          '<div class="r"><small>Naar</small><span class="code">IEP</span><span class="plek">Schouwburg Ieper</span></div></div>' +
+        '<div class="bp-rij bp-meta"><div><small>Datum</small><b>' + dt.kort + ' ' + dt.nr + ' ' + dt.mndKort + '</b></div>' +
+          '<div class="r"><small>Passagier</small><b>' + esc(naam.toUpperCase()) + '</b></div></div>' +
+        '<div class="scheur"></div>' +
+        '<div class="bp-datum"><div class="dag">' + esc(dt.wd) + '</div><h2>' + dt.nr + ' ' + esc(dt.mnd) +
+          (dag.info ? '<span class="info">' + esc(dag.info) + '</span>' : '') + '</h2></div>' +
+        '<p class="vraag">Waar kan jij helpen deze avond? Duid alles aan wat past.</p>';
+
+    state.data.functies.forEach(function (f) {
+      var l = lijstVoor(dag.key, f.id);
+      var tekort = Math.max(0, f.nodig - l.length);
+      var mijn = mijnKeuze(dag.key, f.id);
+      var knop = function (voorkeur, label) {
+        var aan = !!mijn && mijn.voorkeur === voorkeur;
+        return '<button type="button" data-actie="kies" data-voorkeur="' + voorkeur + '" data-dag="' + esc(dag.key) +
+          '" data-functie="' + esc(f.id) + '" aria-pressed="' + aan + '">' + (aan ? '✓ ' : '') + label + '</button>';
+      };
+      var wie = l.length
+        ? 'Al ingecheckt: ' + l.map(function (p) {
+            var isIk = p.naam.toLowerCase() === ik();
+            var t = (p.voorkeur === 'liefst' ? '<span class="ster">♥</span> ' : '') + esc(p.naam);
+            return isIk ? '<span class="ik">' + t + ' (jij)</span>' : t;
+          }).join(', ')
+        : 'Nog niemand ingecheckt.';
+      html += '<section class="gate" aria-label="' + esc(f.naam) + '">' +
+        '<div class="gate-kop"><div><small>GATE</small><b>' + esc(f.naam) + '</b></div>' +
           (tekort ? '<span class="pil tekort">nog ' + tekort + ' nodig</span>'
-                  : '<span class="pil ok">' + lijst.length + ' / ' + f.nodig + ' ok</span>') +
-          '</div><ul class="namen">';
-
-        if (!lijst.length) html += '<li class="leeg">Nog niemand</li>';
-        lijst.forEach(function (i) {
-          var mijn = ik && i.naam.toLowerCase() === ik;
-          if (state.bevestigId === i.id) {
-            html += '<li class="chip bevestig"><span>' + esc(i.naam) + ' weghalen?</span>' +
-              '<button type="button" data-actie="weg" data-id="' + esc(i.id) + '">Ja</button>' +
-              '<button type="button" data-actie="annuleer">Nee</button></li>';
-          } else {
-            html += '<li class="chip' + (mijn ? ' mijn' : '') + '"><span>' +
-              (i.voorkeur === 'liefst' ? '<span class="ster" title="Helpt graag">♥</span><span class="sr">helpt graag: </span>' : '') +
-              esc(i.naam) + '</span>' +
-              (voorbij ? '' : '<button type="button" data-actie="vraag" data-id="' + esc(i.id) + '" aria-label="' +
-                esc(i.naam) + ' weghalen bij ' + esc(f.naam) + '" title="Weghalen">×</button>') + '</li>';
-          }
-        });
-        html += '</ul></div>';
-
-        if (!voorbij) {
-          var knop = function (voorkeur, label) {
-            var aan = !!mijnInschr && mijnInschr.voorkeur === voorkeur;
-            return '<button type="button" data-actie="kies" data-voorkeur="' + voorkeur + '" data-dag="' + esc(dag.key) +
-              '" data-functie="' + esc(f.id) + '" aria-pressed="' + aan + '"' +
-              (ik ? '' : ' disabled title="Vul eerst je naam in"') + '>' + (aan ? '✓ ' : '') + label + '</button>';
-          };
-          html += '<div class="keuze" role="group" aria-label="Jouw keuze voor ' + esc(f.naam) + '">' +
-            knop('liefst', '♥ Ik help graag') + knop('kan', 'Ik kan eventueel ook') + '</div>';
-        }
-        html += '</section>';
-      });
-      html += '</div></div></article>';
+                  : '<span class="pil ok">' + l.length + ' / ' + f.nodig + ' ok</span>') + '</div>' +
+        '<div class="keuze" role="group" aria-label="Jouw keuze voor ' + esc(f.naam) + '">' +
+          knop('liefst', '♥ Ik help graag') + knop('kan', 'Ik kan eventueel ook') + '</div>' +
+        '<p class="wie">' + wie + '</p></section>';
     });
 
-    $dagen.innerHTML = html;
-    $samen.innerHTML = open
-      ? 'Nog <strong>' + open + '</strong> ' + (open === 1 ? 'plaats' : 'plaatsen') + ' open'
-      : '<strong>Alle diensten zijn ingevuld</strong>';
-    if (ik) {
-      $samen.innerHTML += mijnLiefst + mijnKan
-        ? ' · jij: <strong>' + mijnLiefst + '×</strong> graag, <strong>' + mijnKan + '×</strong> eventueel'
-        : ' · jij staat nog nergens op';
+    html += '<div class="barcode" aria-hidden="true"></div></article>' +
+      '<div class="nav"><button type="button" class="terug" data-actie="naar" data-stap="' + (i - 1) + '">← ' + (i === 1 ? 'Uitleg' : 'Vorige') + '</button>' +
+        '<button type="button" class="verder" data-actie="naar" data-stap="' + (i + 1) + '">' +
+          (i === lijst.length ? 'Naar mijn overzicht ✓' : 'Volgende avond ✈') + '</button></div>' +
+      '<p class="geenkeuze">Niets aangeduid op deze avond? Dan weten we dat je niet kan. Dat is ook oké.</p>';
+    return html;
+  }
+
+  function schermOverzicht() {
+    var lijst = avonden();
+    var html = voortgang(lijst.length + 1) +
+      '<article class="kaart bp overzicht">' +
+        '<div class="bp-top"><span>✈ KLAAR VOOR VERTREK</span><span>' + esc(schoon(state.naam).toUpperCase()) + '</span></div>' +
+        '<div class="bp-datum"><div class="dag">Jouw keuzes</div><h2>Overzicht</h2></div>';
+    lijst.forEach(function (dag, i) {
+      var dt = datum(dag.key);
+      var keuzes = state.data.functies.map(function (f) {
+        var m = mijnKeuze(dag.key, f.id);
+        if (!m) return '';
+        return m.voorkeur === 'liefst'
+          ? '<span class="k liefst">♥ ' + esc(f.naam) + '</span>'
+          : '<span class="k kan">' + esc(f.naam) + ' (eventueel)</span>';
+      }).join('');
+      html += '<div class="ov-rij"><div class="ov-dag"><span>' + dt.kort + '</span><b>' + dt.nr + '</b><span>' + dt.mndKort + '</span></div>' +
+        '<div class="ov-keuzes">' + (keuzes || '<span class="niets">Niets aangeduid</span>') + '</div>' +
+        '<button type="button" class="wijzig" data-actie="naar" data-stap="' + (i + 1) + '">Wijzig</button></div>';
+    });
+    var n = aantalMijnKeuzes();
+    html += '<div class="bewaard"><b>' + (n ? '✓ Je keuzes zijn bewaard.' : 'Je hebt nog niets aangeduid.') + '</b>' +
+      (n ? 'Je mag deze pagina nu sluiten. Wij maken het rooster en laten je finaal weten wie wanneer staat. Wijzigen kan later via dezelfde link.'
+         : 'Klik bij een avond op Wijzig om toch iets aan te duiden.') + '</div>' +
+      '<div class="barcode" aria-hidden="true"></div></article>';
+    return html;
+  }
+
+  function render() {
+    if (!state.data) return;
+    document.title = state.data.titel;
+    toonAffiche(state.data.affiche);
+    var n = avonden().length;
+    if (!n) {
+      $app.innerHTML = '<p class="laden">Er staan geen speelavonden meer open om in te checken.</p>';
+      return;
     }
+    if (state.stap > n + 1) state.stap = n + 1;
+    if (state.stap > 0 && !schoon(state.naam)) state.stap = 0;
+    if (state.stap === 0) $app.innerHTML = schermUitleg();
+    else if (state.stap <= n) $app.innerHTML = schermAvond(state.stap);
+    else $app.innerHTML = schermOverzicht();
+  }
+
+  function gaNaar(stap) {
+    state.stap = Math.max(0, stap);
+    render();
+    try { window.scrollTo({ top: document.getElementById('app').offsetTop - 12, behavior: 'smooth' }); }
+    catch (e) { window.scrollTo(0, 0); }
   }
 
   function laad(stil) {
     return roep('getData').then(function (d) {
       state.data = d;
+      // Het naamveld niet onder iemands vingers vervangen.
+      if (stil && state.stap === 0) return;
       render();
     }).catch(function (e) {
       if (!stil) {
-        $dagen.innerHTML = '<p class="laden">Het rooster kon niet geladen worden. Vernieuw de pagina en probeer opnieuw.</p>';
+        $app.innerHTML = '<p class="laden">Het rooster kon niet geladen worden. Vernieuw de pagina en probeer opnieuw.</p>';
         meld((e && e.message) || 'Laden mislukt.', true);
       }
     });
   }
 
-  $dagen.addEventListener('click', function (ev) {
+  // ---------- Interactie ----------
+
+  $app.addEventListener('input', function (ev) {
+    if (ev.target.id !== 'naam') return;
+    state.naam = ev.target.value;
+    try { localStorage.setItem('bardienst-naam', schoon(state.naam)); } catch (e) {}
+    var knop = $app.querySelector('[data-actie="start"]');
+    if (knop) knop.disabled = !schoon(state.naam);
+  });
+
+  $app.addEventListener('keydown', function (ev) {
+    if (ev.target.id === 'naam' && ev.key === 'Enter' && schoon(state.naam)) gaNaar(1);
+  });
+
+  $app.addEventListener('click', function (ev) {
     var btn = ev.target.closest('button[data-actie]');
     if (!btn || state.bezig) return;
     var actie = btn.getAttribute('data-actie');
 
-    if (actie === 'vraag') { state.bevestigId = btn.getAttribute('data-id'); render(); return; }
-    if (actie === 'annuleer') { state.bevestigId = null; render(); return; }
+    if (actie === 'start') { state.naam = schoon(state.naam); return gaNaar(1); }
+    if (actie === 'hulp') return gaNaar(0);
+    if (actie === 'naar') return gaNaar(parseInt(btn.getAttribute('data-stap'), 10));
+    if (actie !== 'kies') return;
 
-    var naam = $naam.value.replace(/\s+/g, ' ').trim();
+    var naam = schoon(state.naam);
+    if (!naam) return gaNaar(0);
+    var dag = btn.getAttribute('data-dag'), functie = btn.getAttribute('data-functie');
+    var voorkeur = btn.getAttribute('data-voorkeur');
+    var mijn = mijnKeuze(dag, functie);
     var p;
-    if (actie === 'kies') {
-      if (!naam) { $naam.focus(); meld('Vul eerst je naam in bovenaan.', true); return; }
-      if (btn.getAttribute('aria-pressed') === 'true') {
-        var mijnId = mijnInschrijving(btn.getAttribute('data-dag'), btn.getAttribute('data-functie'));
-        if (!mijnId) return;
-        p = roep('removeSignup', mijnId).then(function (d) { meld('Je keuze is weggehaald.'); return d; });
-        return bewaar(btn, p);
-      }
-      var voorkeur = btn.getAttribute('data-voorkeur');
-      var wasAl = btn.parentNode.querySelector('[aria-pressed="true"]');
-      p = roep('addSignup', btn.getAttribute('data-dag'), btn.getAttribute('data-functie'), naam, voorkeur)
-        .then(function (d) {
-          meld(wasAl ? 'Aangepast naar ' + (voorkeur === 'liefst' ? '“ik help graag”.' : '“ik kan eventueel ook”.') : 'Genoteerd, bedankt!');
-          return d;
-        });
-    } else if (actie === 'weg') {
-      p = roep('removeSignup', btn.getAttribute('data-id'))
-        .then(function (d) { meld('Naam weggehaald.'); return d; });
+    if (btn.getAttribute('aria-pressed') === 'true' && mijn) {
+      // Nog eens klikken op de gekozen knop = keuze weghalen.
+      p = roep('removeSignup', mijn.id).then(function (d) { meld('Keuze weggehaald.'); return d; });
     } else {
-      return;
+      p = roep('addSignup', dag, functie, naam, voorkeur).then(function (d) {
+        meld(voorkeur === 'liefst' ? '♥ Bewaard: je helpt graag.' : '✓ Bewaard: je kan eventueel.');
+        return d;
+      });
     }
-    bewaar(btn, p);
-  });
 
-  function mijnInschrijving(dag, functie) {
-    var ik = mijnNaam();
-    var i = state.data.inschrijvingen.filter(function (i) {
-      return i.dag === dag && i.functie === functie && i.naam.toLowerCase() === ik;
-    })[0];
-    return i ? i.id : null;
-  }
-
-  function bewaar(btn, p) {
     state.bezig = true;
-    btn.disabled = true;
+    $app.querySelectorAll('.keuze button').forEach(function (b) { b.disabled = true; });
     btn.textContent = 'Even geduld…';
     p.then(function (d) {
       state.data = d;
@@ -530,15 +581,14 @@
       meld((e && e.message) || 'Opslaan mislukt. Probeer opnieuw.', true);
     }).then(function () {
       state.bezig = false;
-      state.bevestigId = null;
       render();
     });
-  }
+  });
 
   laad(false);
-  // Houd het rooster actueel terwijl de pagina open staat.
+  // Houd de aantallen actueel terwijl de pagina open staat.
   setInterval(function () {
-    if (!document.hidden && !state.bezig && state.bevestigId === null) laad(true);
+    if (!document.hidden && !state.bezig) laad(true);
   }, 30000);
 })();
 </script>
